@@ -11,8 +11,8 @@
     "build": "next build",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/db/seed.ts",
+    "db:migrate": "DOTENV_CONFIG_PATH=.env.local drizzle-kit migrate",
+    "db:seed": "DOTENV_CONFIG_PATH=.env.local tsx src/db/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
