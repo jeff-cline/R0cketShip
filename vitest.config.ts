@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     environment: "node",
     setupFiles: ["dotenv/config", "./tests/setup.ts"],
+    globalSetup: ["./tests/global-teardown.ts"],
     env: { NODE_ENV: "test" },
     fileParallelism: false,
   },

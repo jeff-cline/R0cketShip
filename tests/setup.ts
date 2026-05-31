@@ -1,4 +1,4 @@
-import { beforeAll, afterEach, afterAll } from "vitest";
+import { beforeAll, afterEach } from "vitest";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { db, pool } from "@/src/db/client";
 
@@ -8,8 +8,4 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await pool.query("TRUNCATE TABLE tenants RESTART IDENTITY CASCADE");
-});
-
-afterAll(async () => {
-  await pool.end();
 });
