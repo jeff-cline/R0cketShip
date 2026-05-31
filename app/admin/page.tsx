@@ -13,6 +13,7 @@ export default async function AdminPage() {
       <main className="mx-auto max-w-4xl px-6 py-12">
         <h1 className="text-2xl font-bold">God admin</h1>
         <a href="/admin/data" className="mt-2 inline-block text-sm underline">→ Data ingestion</a>
+        <a href="/admin/billing" className="ml-3 inline-block text-sm underline">→ Billing</a>
         <p className="mt-1 opacity-70">{all.length} users across all tenants.</p>
         <form action={createUserAction} className="mt-4 flex flex-wrap gap-2">
           <input name="email" type="email" placeholder="user@email" required className="rounded border p-2" />
