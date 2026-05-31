@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { payments, creditLedger, coupons, wallets } from "../db/schema";
 import { validateCoupon } from "./coupons";
@@ -41,7 +41,7 @@ export async function confirmPayment(paymentId: string) {
       await tx.select().from(payments).where(eq(payments.id, paymentId)).limit(1).for("update")
     )[0];
     if (!p) throw new Error("payment not found");
-    if (p.status === "paid") return p;
+    if (p.status !== "pending") return p;
 
     await tx.update(payments).set({ status: "paid", paidAt: new Date() }).where(eq(payments.id, paymentId));
     await tx.insert(creditLedger).values({
@@ -55,7 +55,7 @@ export async function confirmPayment(paymentId: string) {
     if (p.couponCode) {
       const c = (await tx.select().from(coupons).where(eq(coupons.code, p.couponCode)).limit(1))[0];
       if (c) {
-        await tx.update(coupons).set({ timesRedeemed: c.timesRedeemed + 1 }).where(eq(coupons.id, c.id));
+        await tx.update(coupons).set({ timesRedeemed: sql`${coupons.timesRedeemed} + 1` }).where(eq(coupons.id, c.id));
       }
     }
     return { ...p, status: "paid" as const };

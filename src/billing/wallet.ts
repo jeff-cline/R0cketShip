@@ -40,3 +40,19 @@ export async function grantCredits(walletId: string, amount: number, description
     description,
   });
 }
+
+type Role = "god" | "manager" | "customer";
+
+/** Authorized grant: god → any wallet; manager → only own-tenant wallet; customer → never. */
+export async function grantCreditsAs(
+  actor: { role: Role; tenantId: string },
+  walletId: string,
+  amount: number,
+  description: string,
+) {
+  const wallet = (await db.select().from(wallets).where(eq(wallets.id, walletId)).limit(1))[0];
+  if (!wallet) throw new Error("wallet not found");
+  if (actor.role === "customer") throw new Error("Not authorized");
+  if (actor.role === "manager" && wallet.tenantId !== actor.tenantId) throw new Error("Not authorized");
+  return grantCredits(walletId, amount, description);
+}

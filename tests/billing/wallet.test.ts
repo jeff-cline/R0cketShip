@@ -40,4 +40,21 @@ describe("wallet + bonus", () => {
     await grantCredits(w!.id, -5, "correction");
     expect(await walletBalance(w!.id)).toBe(70);
   });
+
+  it("grantCreditsAs blocks a manager from another tenant's wallet but allows god", async () => {
+    const { grantCreditsAs } = await import("@/src/billing/wallet");
+    const { walletBalance } = await import("@/src/billing/ledger");
+    const u = await createUser({ role: "god", tenantId: tA }, { tenantId: tA, email: "cc@roofers.co", role: "customer", tempPassword: "x" });
+    const w = (await getWalletForUser(u.id))!;
+    // a manager in a DIFFERENT tenant
+    const otherTenant = (await db.insert(tenants).values({ domain: "solar.co", niche: "solar", moneyWord: "m", theme, offers: [], monthlyPriceDefault: "1500" }).returning())[0];
+    await expect(grantCreditsAs({ role: "manager", tenantId: otherTenant.id }, w.id, 10, "x")).rejects.toThrow();
+    expect(await walletBalance(w.id)).toBe(50); // unchanged
+    // god can
+    await grantCreditsAs({ role: "god", tenantId: otherTenant.id }, w.id, 10, "ok");
+    expect(await walletBalance(w.id)).toBe(60);
+    // manager in the SAME tenant can
+    await grantCreditsAs({ role: "manager", tenantId: tA }, w.id, 5, "ok2");
+    expect(await walletBalance(w.id)).toBe(65);
+  });
 });

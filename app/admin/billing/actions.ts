@@ -5,7 +5,7 @@ import { db } from "@/src/db/client";
 import { payments } from "@/src/db/schema";
 import { requireAuth } from "@/src/auth/guard";
 import { confirmPayment } from "@/src/billing/topup";
-import { grantCredits } from "@/src/billing/wallet";
+import { grantCreditsAs } from "@/src/billing/wallet";
 import { createCoupon } from "@/src/billing/coupons";
 
 export async function markPaidAction(formData: FormData) {
@@ -19,11 +19,15 @@ export async function markPaidAction(formData: FormData) {
 }
 
 export async function grantCreditsAction(formData: FormData) {
-  await requireAuth(["god", "manager"]);
+  const ctx = await requireAuth(["god", "manager"]);
   const walletId = String(formData.get("walletId") ?? "");
   const amount = Number(formData.get("amount") ?? 0);
   if (walletId && Number.isFinite(amount) && amount !== 0) {
-    await grantCredits(walletId, amount, String(formData.get("description") ?? "Admin grant"));
+    try {
+      await grantCreditsAs({ role: ctx.user.role, tenantId: ctx.user.tenantId }, walletId, amount, String(formData.get("description") ?? "Admin grant"));
+    } catch {
+      // ignore unauthorized / not-found
+    }
   }
   revalidatePath("/admin/billing");
 }
