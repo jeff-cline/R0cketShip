@@ -10,6 +10,7 @@ export default async function DashboardPage() {
       <main className="mx-auto max-w-2xl px-6 py-12">
         <h1 className="text-2xl font-bold">Customer dashboard</h1>
         <p className="mt-2">Logged in as {ctx.user.email} — customer at {ctx.tenant.domain}.</p>
+        <a href="/billing" className="mt-3 inline-block text-sm underline">→ Credits & billing</a>
         <form action={logoutAction} className="mt-6"><button className="rounded border px-3 py-1">Log out</button></form>
       </main>
     </>
