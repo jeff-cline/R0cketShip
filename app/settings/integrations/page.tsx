@@ -12,7 +12,7 @@ export default async function IntegrationsPage() {
       <p className="mt-1 text-sm opacity-70">Each lead you buy is POSTed to this URL as JSON.</p>
       <form action={saveIntegrationAction} className="mt-4 flex flex-col gap-2">
         <input name="webhookUrl" defaultValue={integ?.webhookUrl ?? ""} placeholder="https://your-crm/webhook" className="rounded border p-2" />
-        <input name="webhookSecret" defaultValue={integ?.webhookSecret ?? ""} placeholder="secret (optional)" className="rounded border p-2" />
+        <input type="password" name="webhookSecret" defaultValue={integ?.webhookSecret ?? ""} placeholder="secret (optional)" className="rounded border p-2" />
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={integ?.active ?? true} /> active</label>
         <button className="self-start rounded bg-black px-3 py-2 text-white">Save</button>
       </form>

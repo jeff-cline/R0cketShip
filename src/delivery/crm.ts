@@ -44,7 +44,12 @@ export async function updateDelivery(
     .set({
       status: patch.status ?? existing.status,
       notes: patch.notes ?? existing.notes,
-      saleValue: patch.saleValue === undefined ? existing.saleValue : patch.saleValue === null ? null : String(patch.saleValue),
+      saleValue:
+        patch.saleValue === undefined
+          ? existing.saleValue
+          : patch.saleValue === null || Number.isNaN(patch.saleValue)
+            ? null
+            : String(patch.saleValue),
       updatedAt: new Date(),
     })
     .where(eq(leadDeliveries.id, deliveryId))

@@ -53,6 +53,15 @@ describe("crm", () => {
     expect(s.creditsSpent).toBe(2.88);
   });
 
+  it("updateDelivery treats a NaN saleValue as null", async () => {
+    const id = await addLead("hN");
+    const r = await purchaseLeads(c1, [id], now);
+    await updateDelivery(c1, r.delivered[0].deliveryId, { status: "sold", saleValue: NaN });
+    const stats = await deliveryStats(c1);
+    expect(Number.isNaN(stats.revenue)).toBe(false);
+    expect(stats.revenue).toBe(0);
+  });
+
   it("deliveriesCsv produces a header + rows", () => {
     const csv = deliveriesCsv([
       { firstName: "Sue", lastName: "X", zip: "30265", status: "new", priceCredits: "1.44", saleValue: null, phones: "+1800", emails: "a@b.co" } as any,

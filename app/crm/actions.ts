@@ -9,7 +9,8 @@ export async function updateDeliveryAction(formData: FormData) {
   const status = String(formData.get("status") ?? "new") as "new" | "contacted" | "booked" | "sold" | "dead";
   const notes = String(formData.get("notes") ?? "");
   const saleRaw = String(formData.get("saleValue") ?? "").trim();
-  const saleValue = saleRaw === "" ? null : Number(saleRaw);
+  const parsed = Number(saleRaw);
+  const saleValue = saleRaw === "" || Number.isNaN(parsed) ? null : parsed;
   try {
     await updateDelivery(ctx.user.id, deliveryId, { status, notes, saleValue });
   } catch {
