@@ -5,6 +5,9 @@ import {
   jsonb,
   numeric,
   timestamp,
+  pgEnum,
+  boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { TenantTheme, Offer } from "../tenant/types";
 
@@ -27,5 +30,39 @@ export const tenants = pgTable("tenants", {
   status: text("status", { enum: ["active", "inactive"] })
     .notNull()
     .default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userRole = pgEnum("user_role", ["god", "manager", "customer"]);
+export const userStatus = pgEnum("user_status", ["active", "disabled"]);
+
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenants.id),
+    email: text("email").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    role: userRole("role").notNull(),
+    mustResetPassword: boolean("must_reset_password").notNull().default(true),
+    name: text("name"),
+    status: userStatus("status").notNull().default("active"),
+    createdBy: uuid("created_by"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("users_tenant_email_uniq").on(t.tenantId, t.email)],
+);
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  impersonatorUserId: uuid("impersonator_user_id"),
+  returnToSessionId: uuid("return_to_session_id"),
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
