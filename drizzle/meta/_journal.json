@@ -15,6 +15,13 @@
       "when": 1780250167356,
       "tag": "0001_nice_zaladane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780258952261,
+      "tag": "0002_shallow_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

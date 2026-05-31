@@ -1,8 +1,9 @@
 import "dotenv/config";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { db, pool } from "./client";
 import { tenants, users } from "./schema";
 import { hashPassword } from "../auth/password";
+import { generateIngestKey } from "../leads/ingest-key";
 import type { TenantTheme, Offer } from "../tenant/types";
 
 const roofersTheme: TenantTheme = {
@@ -81,6 +82,12 @@ async function seed() {
       console.log("God account already present");
     }
   }
+
+  const keyless = await db.select().from(tenants).where(isNull(tenants.ingestKey));
+  for (const t of keyless) {
+    await db.update(tenants).set({ ingestKey: generateIngestKey() }).where(eq(tenants.id, t.id));
+  }
+  if (keyless.length) console.log(`Backfilled ingest keys for ${keyless.length} tenant(s)`);
 
   await pool.end();
 }
