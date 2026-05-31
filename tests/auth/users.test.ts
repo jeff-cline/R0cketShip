@@ -58,6 +58,18 @@ describe("createUser + authority", () => {
     await expect(resetUserPassword(mgrA, u.id, "NEW!2345")).rejects.toThrow();
   });
 
+  it("manager can reset an own-tenant customer but NOT a co-manager", async () => {
+    const god = { role: "god" as const, tenantId: tB };
+    const cust = await createUser(god, { tenantId: tA, email: "cc@roofers.co", role: "customer", tempPassword: "OLD!2345" });
+    const coMgr = await createUser(god, { tenantId: tA, email: "mm@roofers.co", role: "manager", tempPassword: "OLD!2345" });
+    const mgrA = { role: "manager" as const, tenantId: tA };
+    // allowed: own-tenant customer
+    const updated = await resetUserPassword(mgrA, cust.id, "NEW!2345");
+    expect(updated.mustResetPassword).toBe(true);
+    // denied: co-manager in same tenant
+    await expect(resetUserPassword(mgrA, coMgr.id, "NEW!2345")).rejects.toThrow();
+  });
+
   it("listUsers scopes to the actor's tenant unless god", async () => {
     const god = { role: "god" as const, tenantId: tB };
     await createUser(god, { tenantId: tA, email: "a@roofers.co", role: "customer", tempPassword: "TEMP!234" });
