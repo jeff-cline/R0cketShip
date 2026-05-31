@@ -3,6 +3,7 @@ import { db } from "../db/client";
 import { users } from "../db/schema";
 import { hashPassword } from "./password";
 import { tenantFilter } from "../tenant/scope";
+import { ensureWalletWithBonus } from "../billing/wallet";
 
 type Role = "god" | "manager" | "customer";
 export interface Actor {
@@ -59,6 +60,9 @@ export async function createUser(
       createdBy: null,
     })
     .returning();
+  if (row.role === "customer") {
+    await ensureWalletWithBonus(row.id);
+  }
   return row;
 }
 
