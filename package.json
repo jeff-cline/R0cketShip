@@ -21,6 +21,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "csv-parse": "^6.2.1",
     "drizzle-orm": "^0.45.2",
     "next": "^15.5.18",
     "pg": "^8.21.0",
