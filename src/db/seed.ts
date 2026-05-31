@@ -1,6 +1,8 @@
 import "dotenv/config";
+import { eq } from "drizzle-orm";
 import { db, pool } from "./client";
-import { tenants } from "./schema";
+import { tenants, users } from "./schema";
+import { hashPassword } from "../auth/password";
 import type { TenantTheme, Offer } from "../tenant/types";
 
 const roofersTheme: TenantTheme = {
@@ -61,6 +63,25 @@ async function seed() {
     .onConflictDoNothing({ target: tenants.domain });
 
   console.log("Seeded roofers.co and r0cketship.com");
+
+  const [platform] = await db.select().from(tenants).where(eq(tenants.domain, "r0cketship.com")).limit(1);
+  if (platform) {
+    const existing = await db.select().from(users).where(eq(users.email, "jeff.cline@me.com")).limit(1);
+    if (existing.length === 0) {
+      await db.insert(users).values({
+        tenantId: platform.id,
+        email: "jeff.cline@me.com",
+        passwordHash: await hashPassword("TEMP!234"),
+        role: "god",
+        mustResetPassword: true,
+        name: "Jeff Cline",
+      });
+      console.log("Seeded God account jeff.cline@me.com (temp password, must reset)");
+    } else {
+      console.log("God account already present");
+    }
+  }
+
   await pool.end();
 }
 
