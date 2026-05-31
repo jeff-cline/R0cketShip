@@ -132,14 +132,16 @@ a migration.
 ## 6. Data ingestion (D)
 
 Two paths, both funnel through the **same pipeline**, configured per white-label in admin under
-a **"Data Connection"** panel:
+a **"Webhook Integration"** panel:
 
 1. **Bulk seed upload** — operator uploads one large CSV when launching a white-label. The
    header matches the provided `audience_export` format. Rows are parsed, validated,
    tenant-tagged, person-resolved by `sha256_lc_hem`, deduped, and loaded.
-2. **Per-tenant posting endpoint** — admin generates a unique URL + secret key per tenant
-   (e.g. `https://r0cketship.com/api/ingest/<tenant>` + key). Any external system POSTs new
-   leads there for daily/weekly drops.
+2. **Webhook Integration (inbound, system-provided URL)** — the admin panel **generates and
+   displays a unique URL + secret key per white-label** (e.g.
+   `https://r0cketship.com/api/ingest/<tenant>` + key). The operator hands this URL to their
+   **data provider**, which POSTs new leads to it for the daily/weekly drops. We provide the
+   URL; the provider posts to it. This is fully automated — no manual step once configured.
 
 **Pipeline steps (shared):** parse → normalize (split multi-value phone/email cells, derive
 age_tier from `last_updated`, derive residential/commercial from company fields) → upsert
@@ -150,6 +152,10 @@ the same table, unscoped read).
 ---
 
 ## 7. Pricing & billing (E)
+
+**The platform is prepay.** Customers fund their wallet / pay subscriptions before any leads
+are delivered. Collecting ahead on Offer #2 (email engine deferred) is consistent with this —
+it is by design, not an exception.
 
 **Two products, one billing layer.**
 
@@ -281,9 +287,14 @@ advice.)
 
 ## 15. Open questions / assumptions
 
-- **Webhook/data-API automation** (Section 9) — needs an implementation spike to decide
-  automated vs. manual admin step.
+- **Inbound data ingestion** — resolved: the system provides a per-tenant **Webhook
+  Integration** URL + key (Section 6) that the operator's data provider POSTs to. Automated.
+- **Outbound customer-CRM integration** (Section 9) — pushing *delivered* leads into a
+  customer's HubSpot/GHL still needs a spike: can we auto-configure from a pasted API key, or
+  is it a guided manual step per CRM?
 - **Legal TOS copy** — drafted during implementation; not legal advice.
 - **Vanity Twilio number** — static number in slice 1; live redirect with the call-center slice.
 - Phone/email cells contain comma-separated multiples — parsed to arrays (confirmed from seed
   file).
+- **Residential vs commercial classification** — deferred. Slice 1 uses the placeholder rule
+  "has company data ⇒ commercial"; the real rule for roofing is revisited later.
