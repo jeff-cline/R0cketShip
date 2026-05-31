@@ -7,5 +7,5 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  await pool.query("TRUNCATE TABLE tenants, users, sessions, persons, leads, wallets, credit_ledger, payments, coupons RESTART IDENTITY CASCADE");
+  await pool.query("TRUNCATE TABLE tenants, users, sessions, persons, leads, wallets, credit_ledger, payments, coupons, lead_deliveries, customer_integrations RESTART IDENTITY CASCADE");
 });
