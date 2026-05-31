@@ -89,6 +89,8 @@ async function seed() {
   }
   if (keyless.length) console.log(`Backfilled ingest keys for ${keyless.length} tenant(s)`);
 
+  await db.update(tenants).set({ signupBonusCredits: "50" }).where(isNull(tenants.signupBonusCredits));
+
   await pool.end();
 }
 

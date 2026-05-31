@@ -9,6 +9,7 @@ import {
   boolean,
   uniqueIndex,
   index,
+  integer,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { TenantTheme, Offer } from "../tenant/types";
@@ -33,6 +34,7 @@ export const tenants = pgTable("tenants", {
     .notNull()
     .default("active"),
   ingestKey: text("ingest_key"),
+  signupBonusCredits: numeric("signup_bonus_credits").notNull().default("50"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -126,3 +128,55 @@ export const leads = pgTable(
     index("leads_tenant_zip_idx").on(t.tenantId, t.zip),
   ],
 );
+
+export const ledgerType = pgEnum("ledger_type", [
+  "signup_bonus", "topup", "coupon", "admin_grant", "lead_charge", "refund", "adjustment",
+]);
+export const paymentProvider = pgEnum("payment_provider", ["manual", "stripe", "paypal"]);
+export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
+export const couponKind = pgEnum("coupon_kind", ["percent", "fixed_credits"]);
+
+export const wallets = pgTable("wallets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userId: uuid("user_id").notNull().references(() => users.id).unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const creditLedger = pgTable("credit_ledger", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  walletId: uuid("wallet_id").notNull().references(() => wallets.id),
+  tenantId: uuid("tenant_id").notNull(),
+  amount: numeric("amount").notNull(),
+  type: ledgerType("type").notNull(),
+  description: text("description"),
+  refId: uuid("ref_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const payments = pgTable("payments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  walletId: uuid("wallet_id").notNull().references(() => wallets.id),
+  provider: paymentProvider("provider").notNull(),
+  providerRef: text("provider_ref"),
+  amountUsd: numeric("amount_usd").notNull(),
+  credits: numeric("credits").notNull(),
+  couponCode: text("coupon_code"),
+  status: paymentStatus("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  paidAt: timestamp("paid_at"),
+});
+
+export const coupons = pgTable("coupons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id"),
+  code: text("code").notNull().unique(),
+  kind: couponKind("kind").notNull(),
+  value: numeric("value").notNull(),
+  maxRedemptions: integer("max_redemptions"),
+  timesRedeemed: integer("times_redeemed").notNull().default(0),
+  expiresAt: timestamp("expires_at"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
