@@ -180,3 +180,35 @@ export const coupons = pgTable("coupons", {
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const deliveryStatus = pgEnum("delivery_status", ["new", "contacted", "booked", "sold", "dead"]);
+
+export const leadDeliveries = pgTable(
+  "lead_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id").notNull(),
+    customerId: uuid("customer_id").notNull().references(() => users.id),
+    walletId: uuid("wallet_id").notNull().references(() => wallets.id),
+    leadId: uuid("lead_id").notNull().references(() => leads.id),
+    priceCredits: numeric("price_credits").notNull(),
+    tierAtDelivery: text("tier_at_delivery").notNull(),
+    status: deliveryStatus("status").notNull().default("new"),
+    notes: text("notes"),
+    saleValue: numeric("sale_value"),
+    deliveredAt: timestamp("delivered_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("lead_deliveries_customer_lead_uniq").on(t.customerId, t.leadId)],
+);
+
+export const customerIntegrations = pgTable("customer_integrations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  customerId: uuid("customer_id").notNull().references(() => users.id).unique(),
+  webhookUrl: text("webhook_url"),
+  webhookSecret: text("webhook_secret"),
+  active: boolean("active").notNull().default(true),
+  lastStatus: text("last_status"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
