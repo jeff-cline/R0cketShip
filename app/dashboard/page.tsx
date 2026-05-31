@@ -1,0 +1,17 @@
+import { requireAuth } from "@/src/auth/guard";
+import { logoutAction } from "@/app/logout/actions";
+import { ImpersonationBanner } from "@/app/_components/ImpersonationBanner";
+
+export default async function DashboardPage() {
+  const ctx = await requireAuth(["customer"]);
+  return (
+    <>
+      <ImpersonationBanner />
+      <main className="mx-auto max-w-2xl px-6 py-12">
+        <h1 className="text-2xl font-bold">Customer dashboard</h1>
+        <p className="mt-2">Logged in as {ctx.user.email} — customer at {ctx.tenant.domain}.</p>
+        <form action={logoutAction} className="mt-6"><button className="rounded border px-3 py-1">Log out</button></form>
+      </main>
+    </>
+  );
+}
