@@ -44,4 +44,17 @@ describe("getTenantByHost", () => {
   it("returns null for an unknown host", async () => {
     expect(await getTenantByHost("unknown.example")).toBeNull();
   });
+
+  it("does not resolve a tenant whose status is inactive", async () => {
+    await db.insert(tenants).values({
+      domain: "inactive.co",
+      niche: "roofing",
+      moneyWord: "roofing leads",
+      theme,
+      offers,
+      monthlyPriceDefault: "1500",
+      status: "inactive",
+    });
+    expect(await getTenantByHost("inactive.co")).toBeNull();
+  });
 });

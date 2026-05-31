@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { tenants } from "../db/schema";
 import type { Tenant } from "./types";
@@ -17,7 +17,7 @@ export async function getTenantByHost(host: string): Promise<Tenant | null> {
   const rows = await db
     .select()
     .from(tenants)
-    .where(eq(tenants.domain, domain))
+    .where(and(eq(tenants.domain, domain), eq(tenants.status, "active")))
     .limit(1);
 
   const row = rows[0];
