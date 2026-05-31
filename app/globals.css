@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* Default theme tokens. Per-tenant values override these on <html> at runtime. */
+:root {
+  --color-primary: #1f2937;
+  --color-secondary: #374151;
+  --color-accent: #2563eb;
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --font-family: system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-family);
+}
