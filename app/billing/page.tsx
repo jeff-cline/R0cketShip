@@ -2,6 +2,8 @@ import { requireAuth } from "@/src/auth/guard";
 import { getWalletForUser, ensureWalletWithBonus } from "@/src/billing/wallet";
 import { walletBalance, ledgerEntries } from "@/src/billing/ledger";
 import { listPendingPayments } from "@/src/billing/topup";
+import { AppShell } from "@/app/_app/AppShell";
+import { PageHeader, Card, SectionTitle, StatCard, Table, Tr, Td } from "@/app/_ui/primitives";
 import { TopUpForm } from "./TopUpForm";
 
 export default async function BillingPage() {
@@ -10,23 +12,48 @@ export default async function BillingPage() {
   const balance = await walletBalance(wallet.id);
   const entries = await ledgerEntries(wallet.id);
   const pending = (await listPendingPayments(ctx.user.tenantId)).filter((p) => p.walletId === wallet.id);
+  const brand = ctx.tenant.moneyWord.replace(/\b\w/g, (c) => c.toUpperCase());
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="text-2xl font-bold">Credits</h1>
-      <p className="mt-2 text-3xl font-bold">{balance} <span className="text-base font-normal opacity-60">credits</span></p>
-      <h2 className="mt-6 font-semibold">Add credits</h2>
-      <TopUpForm />
-      {pending.length > 0 && <p className="mt-3 text-sm opacity-70">{pending.length} top-up(s) awaiting confirmation.</p>}
-      <h2 className="mt-8 font-semibold">History</h2>
-      <ul className="mt-2 divide-y text-sm">
-        {entries.map((e) => (
-          <li key={e.id} className="flex justify-between py-1">
-            <span>{e.description ?? e.type}</span>
-            <span className={Number(e.amount) < 0 ? "text-red-600" : "text-green-700"}>{Number(e.amount)}</span>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <AppShell brand={brand} role="customer" balance={balance}>
+      <PageHeader title="Credits & billing" subtitle="Top up your wallet and review history." />
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <StatCard label="Wallet balance" value={`${balance}`} sub="credits" accent />
+        </div>
+
+        <Card className="lg:col-span-2">
+          <SectionTitle>Add credits</SectionTitle>
+          <TopUpForm />
+          {pending.length > 0 && (
+            <p className="mt-3 text-sm" style={{ color: "var(--muted)" }}>
+              {pending.length} top-up(s) awaiting confirmation.
+            </p>
+          )}
+        </Card>
+      </div>
+
+      <Card className="mt-6" pad={false}>
+        <Table head={["Activity", "Amount"]}>
+          {entries.map((e) => {
+            const amt = Number(e.amount);
+            return (
+              <Tr key={e.id}>
+                <Td>{e.description ?? e.type}</Td>
+                <Td>
+                  <span style={{ color: amt < 0 ? "var(--neg)" : "var(--pos)", fontWeight: 600 }}>{amt}</span>
+                </Td>
+              </Tr>
+            );
+          })}
+          {entries.length === 0 && (
+            <tr className="border-t" style={{ borderColor: "var(--line)" }}>
+              <td colSpan={2} className="px-4 py-3" style={{ color: "var(--muted)" }}>No activity yet.</td>
+            </tr>
+          )}
+        </Table>
+      </Card>
+    </AppShell>
   );
 }

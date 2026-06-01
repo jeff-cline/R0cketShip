@@ -1,28 +1,61 @@
 import { requireAuth } from "@/src/auth/guard";
 import { listSubscriptions } from "@/src/billing/subscriptions";
+import { AppShell } from "@/app/_app/AppShell";
+import { PageHeader, Card, SectionTitle, Table, Tr, Td, Badge } from "@/app/_ui/primitives";
 import { SubscribeForm } from "./SubscribeForm";
 import { cancelSubAction } from "./actions";
 
 export default async function SubscriptionsPage() {
   const ctx = await requireAuth(["customer"]);
   const subs = await listSubscriptions(ctx.user.id);
+  const brand = ctx.tenant.moneyWord.replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="text-2xl font-bold">ZIP subscriptions</h1>
-      <p className="mt-1 text-sm opacity-70">Subscribe a ZIP for monthly access — leads in your subscribed ZIPs are <strong>free</strong> (covered by the monthly fee). Volume discount: 2nd −10%, 3rd −20%, 4th+ −30%.</p>
-      <SubscribeForm />
-      <ul className="mt-6 space-y-2 text-sm">
-        {subs.map((s) => (
-          <li key={s.id} className="flex items-center gap-3 rounded border p-3">
-            <span className="font-medium">{s.zip}</span>
-            <span className="opacity-70">{s.offer} · ${Number(s.monthlyPrice)}/mo · {s.status}{s.paidThrough ? ` · paid through ${new Date(s.paidThrough).toLocaleDateString()}` : " · invoice pending"}</span>
-            {s.status === "active" && (
-              <form action={cancelSubAction} className="ml-auto"><input type="hidden" name="id" value={s.id} /><button className="text-sm underline">Cancel</button></form>
-            )}
-          </li>
-        ))}
-        {subs.length === 0 && <li className="opacity-60">No subscriptions yet.</li>}
-      </ul>
-    </main>
+    <AppShell brand={brand} role="customer">
+      <PageHeader title="ZIP subscriptions" subtitle="Own every new lead in your territories." />
+
+      <Card>
+        <SectionTitle hint="2nd −10% · 3rd −20% · 4th+ −30%">Subscribe a ZIP</SectionTitle>
+        <p className="mb-4 text-sm" style={{ color: "var(--muted)" }}>
+          Leads in your subscribed ZIPs are <strong>free</strong> — covered by the monthly fee.
+        </p>
+        <SubscribeForm />
+      </Card>
+
+      <div className="mt-6">
+        <SectionTitle>Your subscriptions</SectionTitle>
+        {subs.length === 0 ? (
+          <Card>
+            <p className="text-sm" style={{ color: "var(--muted)" }}>No subscriptions yet.</p>
+          </Card>
+        ) : (
+          <Table head={["ZIP", "Offer", "Monthly", "Status", ""]}>
+            {subs.map((s) => (
+              <Tr key={s.id}>
+                <Td className="font-semibold">{s.zip}</Td>
+                <Td>{s.offer}</Td>
+                <Td>
+                  ${Number(s.monthlyPrice)}/mo
+                  <div className="text-xs" style={{ color: "var(--muted)" }}>
+                    {s.paidThrough ? `paid through ${new Date(s.paidThrough).toLocaleDateString()}` : "invoice pending"}
+                  </div>
+                </Td>
+                <Td>
+                  <Badge tone={s.status === "active" ? "pos" : "neutral"}>{s.status}</Badge>
+                </Td>
+                <Td>
+                  {s.status === "active" && (
+                    <form action={cancelSubAction}>
+                      <input type="hidden" name="id" value={s.id} />
+                      <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Cancel</button>
+                    </form>
+                  )}
+                </Td>
+              </Tr>
+            ))}
+          </Table>
+        )}
+      </div>
+    </AppShell>
   );
 }

@@ -14,7 +14,7 @@ export default async function PricingPage() {
       <MarketingNav brand={tenant.moneyWord} />
       <header className="px-6 pb-2 pt-16 text-center">
         <h1 className="text-4xl font-extrabold">Simple, exclusive pricing</h1>
-        <p className="mx-auto mt-3 max-w-lg opacity-70">Prepay, no contracts, lock your territory by ZIP. Start with $50 in leads free.</p>
+        <p className="mx-auto mt-3 max-w-lg" style={{ color: "var(--muted)" }}>Prepay, no contracts, lock your territory by ZIP. Start with $50 in leads free.</p>
       </header>
       <PricingBlock offers={c.offers} />
       <MarketingFooter footerHtml={c.footerHtml} />

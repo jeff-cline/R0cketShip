@@ -1,24 +1,37 @@
 import { requireAuth } from "@/src/auth/guard";
-import { logoutAction } from "@/app/logout/actions";
-import { ImpersonationBanner } from "@/app/_components/ImpersonationBanner";
+import { AppShell } from "@/app/_app/AppShell";
+import { PageHeader, Card, SectionTitle } from "@/app/_ui/primitives";
+
+const TILES: { href: string; label: string; desc: string }[] = [
+  { href: "/billing", label: "Credits & billing", desc: "Top up and review your wallet ledger." },
+  { href: "/leads", label: "Buy leads", desc: "Browse and purchase available leads." },
+  { href: "/subscriptions", label: "ZIP subscriptions", desc: "Own every new lead in your territories." },
+  { href: "/affiliate", label: "Affiliate", desc: "Earn credits for referrals." },
+  { href: "/crm", label: "My leads (CRM)", desc: "Track and work the leads you own." },
+  { href: "/settings/integrations", label: "Integrations", desc: "Push leads to your CRM automatically." },
+  { href: "/settings/email", label: "Email & booking", desc: "Configure your offer email and calendar." },
+];
 
 export default async function DashboardPage() {
   const ctx = await requireAuth(["customer"]);
+  const brand = ctx.tenant.moneyWord.replace(/\b\w/g, (c) => c.toUpperCase());
+
   return (
-    <>
-      <ImpersonationBanner />
-      <main className="mx-auto max-w-2xl px-6 py-12">
-        <h1 className="text-2xl font-bold">Customer dashboard</h1>
-        <p className="mt-2">Logged in as {ctx.user.email} — customer at {ctx.tenant.domain}.</p>
-        <a href="/billing" className="mt-3 inline-block text-sm underline">→ Credits & billing</a>
-        <a href="/leads" className="mt-3 ml-3 inline-block text-sm underline">→ Buy leads</a>
-        <a href="/subscriptions" className="mt-3 ml-3 inline-block text-sm underline">→ ZIP subscriptions</a>
-        <a href="/affiliate" className="mt-3 ml-3 inline-block text-sm underline">→ Affiliate</a>
-        <a href="/crm" className="mt-3 ml-3 inline-block text-sm underline">→ My leads (CRM)</a>
-        <a href="/settings/integrations" className="mt-3 ml-3 inline-block text-sm underline">→ Integration</a>
-        <a href="/settings/email" className="mt-3 ml-3 inline-block text-sm underline">→ Email & booking</a>
-        <form action={logoutAction} className="mt-6"><button className="rounded border px-3 py-1">Log out</button></form>
-      </main>
-    </>
+    <AppShell brand={brand} role="customer">
+      <PageHeader title="Dashboard" subtitle={`Signed in as ${ctx.user.email} · ${ctx.tenant.domain}`} />
+
+      <SectionTitle>Quick links</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {TILES.map((t) => (
+          <Card key={t.href}>
+            <div className="text-base font-bold">{t.label}</div>
+            <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>{t.desc}</p>
+            <a href={t.href} className="btn btn-ghost mt-4 inline-flex" style={{ padding: "7px 13px" }}>
+              Open
+            </a>
+          </Card>
+        ))}
+      </div>
+    </AppShell>
   );
 }
