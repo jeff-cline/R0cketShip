@@ -33,8 +33,14 @@ describe("normalizeRow", () => {
     expect(r.ok && r.lead.extra).toEqual({ green: "yes", solar_panel: "tesla" });
   });
 
-  it("errors when sha256_lc_hem is missing", () => {
-    expect(normalizeRow({ first_name: "x" })).toEqual({ ok: false, error: "missing sha256_lc_hem" });
+  it("derives a key when sha256_lc_hem is missing but the row has data", () => {
+    const r = normalizeRow({ first_name: "x", business_email: "X@Y.com" });
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.lead.shaLcHem).toBe("alt:email:x@y.com");
+  });
+
+  it("errors only on a completely empty row", () => {
+    expect(normalizeRow({ first_name: "", personal_zip: "" })).toEqual({ ok: false, error: "empty row" });
   });
 
   it("maps core fields and nulls empties", () => {

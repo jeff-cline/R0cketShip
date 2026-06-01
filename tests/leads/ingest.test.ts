@@ -24,10 +24,16 @@ describe("ingestRows", () => {
     expect((await db.select().from(leads).where(eq(leads.tenantId, tA))).length).toBe(2);
   });
 
-  it("counts a row missing the hash as an error", async () => {
-    const s = await ingestRows(tA, "upload", rows([{ personal_zip: "30265" }]));
+  it("ingests a row missing the hash by deriving a key from email (no data lost)", async () => {
+    const s = await ingestRows(tA, "upload", rows([{ business_email: "a@b.com", personal_zip: "30265" }]));
+    expect(s.inserted).toBe(1);
+    expect(s.errors).toBe(0);
+  });
+
+  it("derives a row-hash key when only a zip is present, and errors only on a truly empty row", async () => {
+    const s = await ingestRows(tA, "upload", rows([{ personal_zip: "30265" }, { personal_zip: "" }]));
+    expect(s.inserted).toBe(1);
     expect(s.errors).toBe(1);
-    expect(s.inserted).toBe(0);
   });
 
   it("re-importing the same row does not duplicate (skips when not newer)", async () => {
