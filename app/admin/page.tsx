@@ -3,8 +3,9 @@ import { platformEconomics, tenantEconomics, salesTimeSeries } from "@/src/repor
 import { AreaChart, BarChart } from "@/app/_ui/charts";
 import { PageHeader, Card, SectionTitle, StatCard, Table, Tr, Td } from "@/app/_ui/primitives";
 import { db } from "@/src/db/client";
-import { users, leadDeliveries } from "@/src/db/schema";
+import { users, leadDeliveries, leads } from "@/src/db/schema";
 import { sql } from "drizzle-orm";
+import { openAsWhiteLabelAction } from "./user-actions";
 
 const usd = (n: number) => (n >= 1000 ? "$" + (n / 1000).toFixed(1) + "k" : "$" + n.toFixed(0));
 const pct = (n: number) => (n * 100).toFixed(0) + "%";
@@ -18,6 +19,9 @@ export default async function AdminPage() {
     const series = await salesTimeSeries(6);
     const usersCount = Number((await db.select({ c: sql<number>`count(*)` }).from(users))[0]?.c ?? 0);
     const leadsCount = Number((await db.select({ c: sql<number>`count(*)` }).from(leadDeliveries))[0]?.c ?? 0);
+    // Current leads in each tenant's database (the ingested pool).
+    const leadRows = await db.select({ t: leads.tenantId, c: sql<number>`count(*)` }).from(leads).groupBy(leads.tenantId);
+    const leadMap = new Map(leadRows.map((r) => [r.t, Number(r.c)]));
 
     return (
       <>
@@ -51,18 +55,28 @@ export default async function AdminPage() {
                 <a className="btn btn-primary" href="/admin/launch">+ Add white-label</a>
               </div>
             ) : (
-              <Table head={["White-label", "Sales", "Your 60%", "Gross profit", ""]}>
+              <Table head={["White-label", "Leads", "Sales", "Your 60%", ""]}>
                 {byTenant.map((t) => (
                   <Tr key={t.tenantId}>
                     <Td>
                       <div className="font-medium">{t.domain}</div>
                       <div className="text-xs" style={{ color: "var(--muted-2)" }}>{t.niche}</div>
                     </Td>
+                    <Td>
+                      <a href={`/admin/leads?tenant=${t.tenantId}`} className="font-semibold tabular-nums" style={{ color: "var(--color-accent)" }}>
+                        {(leadMap.get(t.tenantId) ?? 0).toLocaleString()}
+                      </a>
+                    </Td>
                     <Td>{usd(t.sales)}</Td>
                     <Td>{usd(t.platformRevenue)}</Td>
-                    <Td>{usd(t.grossProfit)}</Td>
                     <Td>
-                      <a className="btn btn-ghost" href={`/admin/tenants/${t.tenantId}`} style={{ padding: "6px 10px" }}>Manage</a>
+                      <div className="flex justify-end gap-2">
+                        <a className="btn btn-ghost" href={`/admin/tenants/${t.tenantId}`} style={{ padding: "6px 10px" }}>Manage</a>
+                        <form action={openAsWhiteLabelAction}>
+                          <input type="hidden" name="tenantId" value={t.tenantId} />
+                          <button className="btn btn-primary" style={{ padding: "6px 10px" }}>Open as ↗</button>
+                        </form>
+                      </div>
                     </Td>
                   </Tr>
                 ))}

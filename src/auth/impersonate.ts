@@ -7,9 +7,11 @@ import type { UserRow } from "./context";
 type Role = "god" | "manager" | "customer" | "agent";
 
 export function canImpersonate(actor: { role: Role; tenantId: string }, target: UserRow): boolean {
-  if (target.role !== "customer") return false;
+  if (target.role === "god") return false;
+  // God can "open as" any white-label user (manager/customer/agent) to manage it.
   if (actor.role === "god") return true;
-  if (actor.role === "manager") return target.tenantId === actor.tenantId;
+  // Managers stay limited to their own-tenant customers.
+  if (actor.role === "manager") return target.role === "customer" && target.tenantId === actor.tenantId;
   return false;
 }
 
