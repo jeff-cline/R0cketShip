@@ -1,6 +1,6 @@
 import { requireAuth } from "@/src/auth/guard";
 import { myDeliveries, deliveryStats } from "@/src/delivery/crm";
-import { updateDeliveryAction } from "./actions";
+import { updateDeliveryAction, sendOfferEmailsAction } from "./actions";
 
 export default async function CrmPage() {
   const ctx = await requireAuth(["customer"]);
@@ -14,6 +14,10 @@ export default async function CrmPage() {
         {stats.delivered} delivered · {stats.conversions} conversions · ${stats.revenue} revenue · {stats.creditsSpent} credits spent
         {" · "}<a className="underline" href="/api/crm/export">Download CSV</a>
       </p>
+      <form action={sendOfferEmailsAction} className="mt-3 inline-block">
+        <button className="rounded border px-3 py-1 text-sm">Send offer emails to my leads</button>
+      </form>
+      <a href="/settings/email" className="ml-3 text-sm underline">Email &amp; booking settings</a>
       <ul className="mt-4 space-y-3">
         {rows.map((r) => (
           <li key={r.deliveryId} className="rounded border p-3 text-sm">

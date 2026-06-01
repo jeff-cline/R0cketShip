@@ -16,6 +16,7 @@ export default async function DashboardPage() {
         <a href="/affiliate" className="mt-3 ml-3 inline-block text-sm underline">→ Affiliate</a>
         <a href="/crm" className="mt-3 ml-3 inline-block text-sm underline">→ My leads (CRM)</a>
         <a href="/settings/integrations" className="mt-3 ml-3 inline-block text-sm underline">→ Integration</a>
+        <a href="/settings/email" className="mt-3 ml-3 inline-block text-sm underline">→ Email & booking</a>
         <form action={logoutAction} className="mt-6"><button className="rounded border px-3 py-1">Log out</button></form>
       </main>
     </>

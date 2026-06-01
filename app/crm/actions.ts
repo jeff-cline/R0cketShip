@@ -3,6 +3,18 @@ import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/src/auth/guard";
 import { updateDelivery } from "@/src/delivery/crm";
 
+export async function sendOfferEmailsAction() {
+  const ctx = await requireAuth(["customer"]);
+  const { myDeliveries } = await import("@/src/delivery/crm");
+  const { sendOfferEmails } = await import("@/src/email/campaign");
+  const { getCurrentTenant } = await import("@/src/tenant/context");
+  const tenant = await getCurrentTenant();
+  const base = tenant ? `https://${tenant.domain}` : "";
+  const rows = await myDeliveries(ctx.user.id);
+  await sendOfferEmails(ctx.user.id, rows.map((r) => r.deliveryId), base);
+  revalidatePath("/crm");
+}
+
 export async function updateDeliveryAction(formData: FormData) {
   const ctx = await requireAuth(["customer"]);
   const deliveryId = String(formData.get("deliveryId") ?? "");
