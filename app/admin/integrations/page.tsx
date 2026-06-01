@@ -4,7 +4,7 @@ import { tenants } from "@/src/db/schema";
 import { tenantFilter } from "@/src/tenant/scope";
 import { getIntegrations } from "@/src/integrations/store";
 import { maskSecret } from "@/src/crypto/secrets";
-import { saveIntegrationsAction } from "./actions";
+import { saveIntegrationsAction, regenerateIngestKeyAction } from "./actions";
 
 export default async function IntegrationsAdminPage() {
   const ctx = await requireAuth(["god", "manager"]);
@@ -21,6 +21,13 @@ export default async function IntegrationsAdminPage() {
         return (
           <section key={t.id} className="mt-6 rounded-xl border p-5">
             <h2 className="font-semibold">{t.domain}</h2>
+            <div className="mb-4 rounded bg-gray-50 p-3 text-xs">
+              <div className="font-medium">Inbound data webhook (give this to your data provider)</div>
+              <code className="mt-1 block break-all">POST https://{t.domain}/api/ingest/{t.id}</code>
+              <code className="block break-all">Header — x-ingest-key: {t.ingestKey ?? "(run seed)"}</code>
+              <div className="mt-1 opacity-70">Body: a JSON array of lead objects, OR raw CSV (same columns as your bulk file). Have them POST your weekly/daily drop here. Returns {"{ inserted, updated, skipped, errors }"}.</div>
+              <form action={regenerateIngestKeyAction} className="mt-2"><input type="hidden" name="tenantId" value={t.id} /><button className="rounded border px-2 py-1">Regenerate key</button></form>
+            </div>
             <form action={saveIntegrationsAction} className="mt-3 grid grid-cols-2 gap-2 text-sm">
               <input type="hidden" name="tenantId" value={t.id} />
               <label className="col-span-2 font-medium">Stripe</label>

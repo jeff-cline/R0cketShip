@@ -1,6 +1,7 @@
 import { requireAuth } from "@/src/auth/guard";
 import { getIntegration } from "@/src/delivery/webhook";
 import { saveIntegrationAction, testIntegrationAction } from "./actions";
+import { CRM_INTEGRATIONS } from "@/src/marketing/integrations-list";
 
 export default async function IntegrationsPage() {
   const ctx = await requireAuth(["customer"]);
@@ -18,6 +19,13 @@ export default async function IntegrationsPage() {
       </form>
       {integ?.lastStatus && <p className="mt-3 text-sm opacity-70">Last delivery: {integ.lastStatus}</p>}
       <form action={testIntegrationAction} className="mt-3"><button className="rounded border px-3 py-1 text-sm">Send test</button></form>
+      <h2 className="mt-8 font-semibold">Move your leads to your CRM</h2>
+      <p className="mt-1 text-sm opacity-70">Get a webhook/inbound URL from your CRM, paste it above, and every lead you buy is pushed there automatically.</p>
+      <ul className="mt-3 space-y-2 text-sm">
+        {CRM_INTEGRATIONS.map((c) => (
+          <li key={c.name} className="rounded border p-3"><span className="font-medium">{c.name}</span> — <span className="opacity-70">{c.how}</span></li>
+        ))}
+      </ul>
     </main>
   );
 }

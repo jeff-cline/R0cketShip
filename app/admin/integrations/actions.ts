@@ -33,3 +33,18 @@ export async function saveIntegrationsAction(formData: FormData) {
   });
   revalidatePath("/admin/integrations");
 }
+
+export async function regenerateIngestKeyAction(formData: FormData) {
+  const ctx = await requireAuth(["god", "manager"]);
+  const tenantId = String(formData.get("tenantId") ?? "");
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/src/db/client");
+  const { tenants } = await import("@/src/db/schema");
+  const { generateIngestKey } = await import("@/src/leads/ingest-key");
+  const t = (await db.select().from(tenants).where(eq(tenants.id, tenantId)).limit(1))[0];
+  if (t && (ctx.user.role === "god" || t.id === ctx.user.tenantId)) {
+    await db.update(tenants).set({ ingestKey: generateIngestKey() }).where(eq(tenants.id, tenantId));
+  }
+  const { revalidatePath } = await import("next/cache");
+  revalidatePath("/admin/integrations");
+}
