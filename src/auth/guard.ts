@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthContext, canAccess } from "./context";
 
-type Role = "god" | "manager" | "customer";
+type Role = "god" | "manager" | "customer" | "agent";
 
 /** Server guard: ensures a session, forces password reset, and gates by role. */
 export async function requireAuth(allowed: Role[]) {

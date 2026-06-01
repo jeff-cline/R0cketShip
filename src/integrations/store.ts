@@ -14,6 +14,7 @@ export interface IntegrationsView {
   twilioAccountSid: string | null;
   twilioAuthToken: string | null;
   twilioFromNumber: string | null;
+  hotTransferNumber: string | null;
   smtpHost: string | null;
   smtpPort: string | null;
   smtpUser: string | null;
@@ -31,6 +32,7 @@ export interface IntegrationsPatch {
   twilioAccountSid?: string | null;
   twilioAuthToken?: string | null;
   twilioFromNumber?: string | null;
+  hotTransferNumber?: string | null;
   smtpHost?: string | null;
   smtpPort?: string | null;
   smtpUser?: string | null;
@@ -42,7 +44,7 @@ export interface IntegrationsPatch {
 export async function getIntegrations(tenantId: string): Promise<IntegrationsView> {
   const row = (await db.select().from(tenantIntegrations).where(eq(tenantIntegrations.tenantId, tenantId)).limit(1))[0];
   if (!row) {
-    return { stripeSecret: null, stripePublishable: null, stripeWebhookSecret: null, paypalClientId: null, paypalSecret: null, twilioAccountSid: null, twilioAuthToken: null, twilioFromNumber: null, smtpHost: null, smtpPort: null, smtpUser: null, smtpPass: null, smtpFrom: null, activePaymentProvider: "manual" };
+    return { stripeSecret: null, stripePublishable: null, stripeWebhookSecret: null, paypalClientId: null, paypalSecret: null, twilioAccountSid: null, twilioAuthToken: null, twilioFromNumber: null, hotTransferNumber: null, smtpHost: null, smtpPort: null, smtpUser: null, smtpPass: null, smtpFrom: null, activePaymentProvider: "manual" };
   }
   return {
     stripeSecret: decryptSecret(row.stripeSecretEnc),
@@ -53,6 +55,7 @@ export async function getIntegrations(tenantId: string): Promise<IntegrationsVie
     twilioAccountSid: row.twilioAccountSid,
     twilioAuthToken: decryptSecret(row.twilioAuthTokenEnc),
     twilioFromNumber: row.twilioFromNumber,
+    hotTransferNumber: row.hotTransferNumber,
     smtpHost: row.smtpHost,
     smtpPort: row.smtpPort,
     smtpUser: row.smtpUser,
@@ -75,6 +78,7 @@ export async function setIntegrations(tenantId: string, patch: IntegrationsPatch
     twilioAccountSid: patch.twilioAccountSid !== undefined ? (patch.twilioAccountSid || null) : existing?.twilioAccountSid ?? null,
     twilioAuthTokenEnc: patch.twilioAuthToken !== undefined ? encryptSecret(patch.twilioAuthToken) : existing?.twilioAuthTokenEnc ?? null,
     twilioFromNumber: patch.twilioFromNumber !== undefined ? (patch.twilioFromNumber || null) : existing?.twilioFromNumber ?? null,
+    hotTransferNumber: patch.hotTransferNumber !== undefined ? (patch.hotTransferNumber || null) : existing?.hotTransferNumber ?? null,
     smtpHost: patch.smtpHost !== undefined ? (patch.smtpHost || null) : existing?.smtpHost ?? null,
     smtpPort: patch.smtpPort !== undefined ? (patch.smtpPort || null) : existing?.smtpPort ?? null,
     smtpUser: patch.smtpUser !== undefined ? (patch.smtpUser || null) : existing?.smtpUser ?? null,

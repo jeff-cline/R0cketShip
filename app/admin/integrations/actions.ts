@@ -23,6 +23,7 @@ export async function saveIntegrationsAction(formData: FormData) {
     twilioAccountSid: plain("twilioAccountSid"),
     twilioAuthToken: secret("twilioAuthToken"),
     twilioFromNumber: plain("twilioFromNumber"),
+    hotTransferNumber: plain("hotTransferNumber"),
     smtpHost: plain("smtpHost"),
     smtpPort: plain("smtpPort"),
     smtpUser: plain("smtpUser"),

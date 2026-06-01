@@ -38,7 +38,7 @@ export const tenants = pgTable("tenants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const userRole = pgEnum("user_role", ["god", "manager", "customer"]);
+export const userRole = pgEnum("user_role", ["god", "manager", "customer", "agent"]);
 export const userStatus = pgEnum("user_status", ["active", "disabled"]);
 
 export const users = pgTable(
@@ -229,6 +229,7 @@ export const tenantIntegrations = pgTable("tenant_integrations", {
   twilioAccountSid: text("twilio_account_sid"),
   twilioAuthTokenEnc: text("twilio_auth_token_enc"),
   twilioFromNumber: text("twilio_from_number"),
+  hotTransferNumber: text("hot_transfer_number"),
   stripeWebhookSecretEnc: text("stripe_webhook_secret_enc"),
   smtpHost: text("smtp_host"),
   smtpPort: text("smtp_port"),
@@ -300,5 +301,19 @@ export const emailSends = pgTable("email_sends", {
   deliveryId: uuid("delivery_id").notNull(),
   leadEmail: text("lead_email"),
   status: emailSendStatus("status").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const callDisposition = pgEnum("call_disposition", ["no_answer", "left_message", "callback", "hot_transfer", "booked", "sold", "dead"]);
+
+export const calls = pgTable("calls", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  leadId: uuid("lead_id").notNull().references(() => leads.id),
+  agentId: uuid("agent_id").notNull().references(() => users.id),
+  disposition: callDisposition("disposition").notNull(),
+  notes: text("notes"),
+  callbackAt: timestamp("callback_at"),
+  saleValue: numeric("sale_value"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -34,6 +34,7 @@ export default async function IntegrationsAdminPage() {
               <input name="twilioAccountSid" defaultValue={i.twilioAccountSid ?? ""} placeholder="AC..." className="rounded border p-2" />
               <input name="twilioAuthToken" type="password" placeholder={i.twilioAuthToken ? maskSecret(i.twilioAuthToken) : "auth token"} className="rounded border p-2" />
               <input name="twilioFromNumber" defaultValue={i.twilioFromNumber ?? ""} placeholder="+1770..." className="col-span-2 rounded border p-2" />
+              <input name="hotTransferNumber" defaultValue={i.hotTransferNumber ?? ""} placeholder="hot-transfer number (+1770...)" className="col-span-2 rounded border p-2" />
               <label className="col-span-2 mt-2 font-medium">SMTP (email)</label>
               <input name="smtpHost" defaultValue={i.smtpHost ?? ""} placeholder="smtp host" className="rounded border p-2" />
               <input name="smtpPort" defaultValue={i.smtpPort ?? ""} placeholder="port (587)" className="rounded border p-2" />
