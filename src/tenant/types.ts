@@ -43,4 +43,8 @@ export interface Tenant {
   heroVideo: string | null;
   heroHeadline: string | null;
   heroSubhead: string | null;
+  partnerProgramEnabled: boolean;
+  partnerRate: string;
+  showBecomeAPartner: boolean;
+  customerFundingPolicy: string;
 }

@@ -6,7 +6,6 @@ const TILES: { href: string; label: string; desc: string }[] = [
   { href: "/billing", label: "Credits & billing", desc: "Top up and review your wallet ledger." },
   { href: "/leads", label: "Buy leads", desc: "Browse and purchase available leads." },
   { href: "/subscriptions", label: "ZIP subscriptions", desc: "Own every new lead in your territories." },
-  { href: "/affiliate", label: "Affiliate", desc: "Earn credits for referrals." },
   { href: "/crm", label: "My leads (CRM)", desc: "Track and work the leads you own." },
   { href: "/settings/integrations", label: "Integrations", desc: "Push leads to your CRM automatically." },
   { href: "/settings/email", label: "Email & booking", desc: "Configure your offer email and calendar." },

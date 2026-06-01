@@ -38,7 +38,7 @@ export async function purchaseLeads(
   });
   const total = Math.round(priced.reduce((s, p) => s + p.price, 0) * 100) / 100;
 
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx.select().from(wallets).where(eq(wallets.id, wallet.id)).for("update");
     const [bal] = await tx
       .select({ total: sql<string>`coalesce(sum(${creditLedger.amount}), 0)` })
@@ -63,4 +63,11 @@ export async function purchaseLeads(
     }
     return { delivered, totalCharged: total, skipped };
   });
+
+  // Referral funnel: spending credit on leads counts as "activated".
+  if (result.delivered.length > 0) {
+    const { markActivated } = await import("../referral/core");
+    await markActivated(customerId);
+  }
+  return result;
 }
