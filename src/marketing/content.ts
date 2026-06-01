@@ -12,6 +12,8 @@ export interface MarketingContent {
   subhead: string;
   /** Optional hero image URL from the tenant. */
   heroImage: string | null;
+  /** Optional hero background video (mp4) URL from the tenant. */
+  heroVideo: string | null;
   features: MFeature[];
   stats: MStat[];
   testimonials: MTestimonial[];
@@ -32,6 +34,7 @@ export function marketingContent(tenant: Tenant): MarketingContent {
     footerHtml: tenant.footerHtml,
     headline: tenant.heroHeadline || titleCase(tenant.moneyWord),
     heroImage: tenant.heroImage,
+    heroVideo: tenant.heroVideo,
     subhead:
       tenant.heroSubhead ||
       `High-intent ${niche} customers actively looking — in your exclusive ZIP, delivered daily to your CRM.`,

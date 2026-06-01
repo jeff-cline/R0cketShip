@@ -47,6 +47,7 @@ export async function createTenant(input: {
   platformFeeRate?: string;
   dataCostRate?: string;
   heroImage?: string | null;
+  heroVideo?: string | null;
   heroHeadline?: string | null;
   heroSubhead?: string | null;
 }): Promise<TenantRow> {
@@ -74,6 +75,7 @@ export async function createTenant(input: {
       platformFeeRate: input.platformFeeRate ?? "0.60",
       dataCostRate: input.dataCostRate ?? "0.00",
       heroImage: input.heroImage ?? null,
+      heroVideo: input.heroVideo ?? null,
       heroHeadline: input.heroHeadline ?? null,
       heroSubhead: input.heroSubhead ?? null,
     })
@@ -98,6 +100,7 @@ export async function updateTenantConfig(
     platformFeeRate: string;
     dataCostRate: string;
     heroImage: string | null;
+    heroVideo: string | null;
     heroHeadline: string | null;
     heroSubhead: string | null;
   }>,

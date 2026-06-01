@@ -40,6 +40,7 @@ export interface Tenant {
   /** Data cost rate (fraction of sales) used for r0cketship gross-profit. */
   dataCostRate: string;
   heroImage: string | null;
+  heroVideo: string | null;
   heroHeadline: string | null;
   heroSubhead: string | null;
 }
