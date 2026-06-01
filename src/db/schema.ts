@@ -130,7 +130,7 @@ export const leads = pgTable(
 );
 
 export const ledgerType = pgEnum("ledger_type", [
-  "signup_bonus", "topup", "coupon", "admin_grant", "lead_charge", "refund", "adjustment",
+  "signup_bonus", "topup", "coupon", "admin_grant", "lead_charge", "refund", "adjustment", "affiliate",
 ]);
 export const paymentProvider = pgEnum("payment_provider", ["manual", "stripe", "paypal"]);
 export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
