@@ -44,28 +44,37 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
       <Card className="mt-6">
         <SectionTitle hint="passwords are hashed — they can't be viewed, only set">All users</SectionTitle>
-        <Table head={["Email", "Role", "White-label", "Set login password"]}>
-          {all.map((u) => (
-            <Tr key={u.id}>
-              <Td>
-                <div className="font-medium">{u.email}</div>
-                {u.mustResetPassword && <div className="text-xs" style={{ color: "var(--warn)" }}>must reset on next login</div>}
-              </Td>
-              <Td><Badge tone={u.role === "god" ? "accent" : "neutral"}>{u.role}</Badge></Td>
-              <Td><span className="text-xs" style={{ color: "var(--muted)" }}>{domainById.get(u.tenantId) ?? u.tenantId}</span></Td>
-              <Td>
-                {u.role === "god" ? (
-                  <span className="text-xs" style={{ color: "var(--muted-2)" }}>—</span>
-                ) : (
-                  <form action={setUserPasswordAction} className="flex items-center gap-1.5">
-                    <input type="hidden" name="userId" value={u.id} />
-                    <input name="password" type="text" placeholder="new password (≥6)" className="input" style={{ padding: "5px 8px", width: "180px" }} />
-                    <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Set</button>
-                  </form>
-                )}
-              </Td>
-            </Tr>
-          ))}
+        <Table head={["Email", "Role", "White-label", "Set login password", ""]}>
+          {all.map((u) => {
+            // god can open as any non-god; a manager can sign in as their own customers.
+            const canOpen = u.role !== "god" && (ctx.user.role === "god" || u.role === "customer");
+            return (
+              <Tr key={u.id}>
+                <Td>
+                  <div className="font-medium">{u.email}</div>
+                  {u.mustResetPassword && <div className="text-xs" style={{ color: "var(--warn)" }}>must reset on next login</div>}
+                </Td>
+                <Td><Badge tone={u.role === "god" ? "accent" : "neutral"}>{u.role}</Badge></Td>
+                <Td><span className="text-xs" style={{ color: "var(--muted)" }}>{domainById.get(u.tenantId) ?? u.tenantId}</span></Td>
+                <Td>
+                  {u.role === "god" ? (
+                    <span className="text-xs" style={{ color: "var(--muted-2)" }}>—</span>
+                  ) : (
+                    <form action={setUserPasswordAction} className="flex items-center gap-1.5">
+                      <input type="hidden" name="userId" value={u.id} />
+                      <input name="password" type="text" placeholder="new password (≥6)" className="input" style={{ padding: "5px 8px", width: "170px" }} />
+                      <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Set</button>
+                    </form>
+                  )}
+                </Td>
+                <Td>
+                  {canOpen ? (
+                    <a href={`/admin/impersonate/${u.id}`} className="btn btn-ghost" style={{ padding: "5px 11px" }}>Sign in as ↗</a>
+                  ) : null}
+                </Td>
+              </Tr>
+            );
+          })}
         </Table>
       </Card>
     </>
