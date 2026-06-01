@@ -17,6 +17,7 @@ export default async function AdminPage() {
         <a href="/admin/integrations" className="ml-3 inline-block text-sm underline">→ Integrations</a>
         <a href="/admin/partners" className="ml-3 inline-block text-sm underline">→ E-Partners</a>
         <a href="/admin/tenants" className="ml-3 inline-block text-sm underline">→ White-labels</a>
+        <a href="/admin/insights" className="ml-3 inline-block text-sm underline">→ Insights</a>
         <p className="mt-1 opacity-70">{all.length} users across all tenants.</p>
         <form action={createUserAction} className="mt-4 flex flex-wrap gap-2">
           <input name="email" type="email" placeholder="user@email" required className="rounded border p-2" />
