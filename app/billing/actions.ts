@@ -10,10 +10,19 @@ export async function topUpAction(_prev: unknown, formData: FormData): Promise<{
   if (!Number.isFinite(amount) || amount <= 0) return { error: "Enter a positive amount." };
   const couponCode = String(formData.get("coupon") ?? "").trim() || undefined;
   const wallet = (await getWalletForUser(ctx.user.id)) ?? (await ensureWalletWithBonus(ctx.user.id));
+  const { getCurrentTenant } = await import("@/src/tenant/context");
+  const tenant = await getCurrentTenant();
+  const base = tenant ? `https://${tenant.domain}` : "";
+  let start;
   try {
-    await createTopup(wallet.id, amount, couponCode);
+    const res = await createTopup(wallet.id, amount, couponCode, { success: `${base}/billing?paid=1`, cancel: `${base}/billing` });
+    start = res.start;
   } catch (e) {
     return { error: (e as Error).message };
+  }
+  if (start.kind === "redirect" && start.url) {
+    const { redirect } = await import("next/navigation");
+    redirect(start.url);
   }
   revalidatePath("/billing");
   return { ok: true };
