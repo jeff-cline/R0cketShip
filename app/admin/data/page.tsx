@@ -45,6 +45,10 @@ export default async function DataPage() {
                 <div style={{ color: "var(--muted)" }}>segments: residential {counts.bySegment.residential}, commercial {counts.bySegment.commercial}</div>
                 <div style={{ color: "var(--muted)" }}>top zips: {counts.topZips.map((z) => `${z.zip}(${z.count})`).join(", ") || "—"}</div>
               </div>
+
+              <div className="mt-4">
+                <a className="btn btn-ghost" href={`/admin/leads?tenant=${t.id}`}>Browse leads →</a>
+              </div>
             </Card>
           );
         }))}
