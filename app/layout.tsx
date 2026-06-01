@@ -13,21 +13,30 @@ function titleCase(s: string) {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getCurrentTenant();
+/** Compute SEO fields once, host-aware, so metadata and JSON-LD stay in sync. */
+function seoFor(t: Awaited<ReturnType<typeof getCurrentTenant>>) {
+  const domain = (t?.domain ?? "r0cketship.com").replace(/^www\./, "");
+  const base = `https://${domain}`;
+  const isHub = domain === "r0cketship.com";
   const brand = t?.moneyWord ? titleCase(t.moneyWord) : "R0cketShip";
   const niche = t?.niche ? titleCase(t.niche) : "Business";
-  const domain = t?.domain ?? "r0cketship.com";
-  const base = `https://${domain}`;
-  const title = `${brand} — ${niche} Leads in Your ZIP`;
-  const description = t
-    ? `High-intent ${t.niche} leads delivered to your CRM — exclusive by ZIP, predictive intent data, $50 free to start.`
-    : "White-label business-lead platform — predictive, ZIP-exclusive leads delivered to your CRM.";
-  const ogImg = t?.heroImage
-    ? t.heroImage.startsWith("http")
-      ? t.heroImage
-      : base + t.heroImage
-    : undefined;
+  // "Roofing Leads" — avoid doubling "Leads" when the money word already has it.
+  const phrase = t?.moneyWord && /lead/i.test(t.moneyWord) ? titleCase(t.moneyWord) : `${niche} Leads`;
+  const title = isHub
+    ? "R0cketShip — White-Label Lead Networks by Niche"
+    : `${phrase} in Your ZIP — ${domain}`;
+  const description = isHub
+    ? "R0cketShip powers white-label lead networks — predictive, ZIP-exclusive leads delivered to your CRM. Browse niches or launch your own."
+    : t
+      ? `High-intent ${t.niche} leads delivered to your CRM — exclusive by ZIP, predictive intent data, $50 free to start.`
+      : "White-label business-lead platform — predictive, ZIP-exclusive leads delivered to your CRM.";
+  const ogImg = t?.heroImage ? (t.heroImage.startsWith("http") ? t.heroImage : base + t.heroImage) : undefined;
+  return { domain, base, isHub, brand, niche, phrase, title, description, ogImg };
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getCurrentTenant();
+  const { base, brand, title, description, ogImg } = seoFor(t);
   return {
     metadataBase: new URL(base),
     title: { default: title, template: `%s · ${brand}` },
@@ -81,19 +90,8 @@ export default async function RootLayout({
     ? (themeToCssVars(tenant.theme) as React.CSSProperties)
     : undefined;
 
-  const brand = tenant?.moneyWord ? titleCase(tenant.moneyWord) : "R0cketShip";
-  const niche = tenant?.niche ? titleCase(tenant.niche) : "Business";
-  const domain = tenant?.domain ?? "r0cketship.com";
-  const base = `https://${domain}`;
-  const description = tenant
-    ? `High-intent ${tenant.niche} leads delivered to your CRM — exclusive by ZIP, predictive intent data, $50 free to start.`
-    : "White-label business-lead platform — predictive, ZIP-exclusive leads delivered to your CRM.";
-  const ogImg = tenant?.heroImage
-    ? tenant.heroImage.startsWith("http")
-      ? tenant.heroImage
-      : base + tenant.heroImage
-    : undefined;
-  const slogan = tenant?.heroHeadline ?? `${niche} Leads in Your ZIP`;
+  const { base, brand, description, ogImg, phrase } = seoFor(tenant);
+  const slogan = tenant?.heroHeadline ?? `${phrase} in Your ZIP`;
 
   const jsonLd = {
     "@context": "https://schema.org",
