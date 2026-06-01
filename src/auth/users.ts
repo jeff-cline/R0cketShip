@@ -5,7 +5,7 @@ import { hashPassword } from "./password";
 import { tenantFilter } from "../tenant/scope";
 import { ensureWalletWithBonus } from "../billing/wallet";
 
-type Role = "god" | "manager" | "customer";
+type Role = "god" | "manager" | "customer" | "agent";
 export interface Actor {
   role: Role;
   tenantId: string;
@@ -18,7 +18,7 @@ export function canCreateUser(
 ): boolean {
   if (actor.role === "god") return target.role !== "god";
   if (actor.role === "manager") {
-    return target.role === "customer" && target.tenantId === actor.tenantId;
+    return (target.role === "customer" || target.role === "agent") && target.tenantId === actor.tenantId;
   }
   return false;
 }

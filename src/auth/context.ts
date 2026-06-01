@@ -3,7 +3,7 @@ import { db } from "../db/client";
 import { users, tenants, sessions } from "../db/schema";
 import { resolveSession, SESSION_COOKIE } from "./session";
 
-type Role = "god" | "manager" | "customer";
+type Role = "god" | "manager" | "customer" | "agent";
 export type UserRow = typeof users.$inferSelect;
 export type TenantRow = typeof tenants.$inferSelect;
 
