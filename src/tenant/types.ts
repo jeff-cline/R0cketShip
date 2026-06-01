@@ -4,6 +4,8 @@ export interface Offer {
   description: string;
   /** Display price string, e.g. "$1,500/mo per ZIP". */
   price: string;
+  /** "What you get" bullet points shown on the offer card. */
+  features?: string[];
 }
 
 export interface TenantTheme {
@@ -33,4 +35,11 @@ export interface Tenant {
   activePaymentProvider: PaymentProvider;
   status: TenantStatus;
   style: "trust" | "bold" | "dark";
+  /** r0cketship's cut of each sale (fraction). White-label keeps 1 - this. */
+  platformFeeRate: string;
+  /** Data cost rate (fraction of sales) used for r0cketship gross-profit. */
+  dataCostRate: string;
+  heroImage: string | null;
+  heroHeadline: string | null;
+  heroSubhead: string | null;
 }

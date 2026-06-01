@@ -44,6 +44,11 @@ export async function createTenant(input: {
   footerHtml?: string;
   logoUrl?: string | null;
   style?: "trust" | "bold" | "dark";
+  platformFeeRate?: string;
+  dataCostRate?: string;
+  heroImage?: string | null;
+  heroHeadline?: string | null;
+  heroSubhead?: string | null;
 }): Promise<TenantRow> {
   const domain = input.domain.toLowerCase().trim();
   if (!domain) throw new Error("domain required");
@@ -66,6 +71,11 @@ export async function createTenant(input: {
       ingestKey: generateIngestKey(),
       signupBonusCredits: "50",
       style: input.style ?? "bold",
+      platformFeeRate: input.platformFeeRate ?? "0.60",
+      dataCostRate: input.dataCostRate ?? "0.00",
+      heroImage: input.heroImage ?? null,
+      heroHeadline: input.heroHeadline ?? null,
+      heroSubhead: input.heroSubhead ?? null,
     })
     .returning();
   return row;
@@ -85,6 +95,11 @@ export async function updateTenantConfig(
     activePaymentProvider: Provider;
     status: "active" | "inactive";
     style: "trust" | "bold" | "dark";
+    platformFeeRate: string;
+    dataCostRate: string;
+    heroImage: string | null;
+    heroHeadline: string | null;
+    heroSubhead: string | null;
   }>,
 ): Promise<void> {
   const set: Record<string, unknown> = {};
