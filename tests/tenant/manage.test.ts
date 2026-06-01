@@ -33,4 +33,12 @@ describe("tenant management", () => {
     expect(resolved?.monthlyPriceDefault).toBe("2000");
     expect(resolved?.niche).toBe("x"); // untouched
   });
+
+  it("createTenant defaults style to bold; updateTenantConfig changes it", async () => {
+    const row = await createTenant({ domain: "styled.co", niche: "x", moneyWord: "m", offers: [{ id: 1, title: "t", description: "d", price: "p" }] });
+    expect(row.style).toBe("bold");
+    await updateTenantConfig(row.id, { style: "dark" });
+    const resolved = await getTenantByHost("styled.co");
+    expect(resolved?.style).toBe("dark");
+  });
 });

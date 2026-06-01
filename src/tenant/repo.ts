@@ -36,5 +36,6 @@ export async function getTenantByHost(host: string): Promise<Tenant | null> {
     footerHtml: row.footerHtml,
     activePaymentProvider: row.activePaymentProvider,
     status: row.status,
+    style: row.style,
   };
 }
