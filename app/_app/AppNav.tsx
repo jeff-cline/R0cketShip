@@ -47,9 +47,18 @@ export function AppNav({ brand, items, balance }: { brand: string; items: AppNav
               <span style={{ fontSize: 9 }}>●</span> {balance.toLocaleString()} credits
             </a>
           )}
-          <form action={logoutAction}>
+          <form action={logoutAction} className="hidden md:block">
             <button className="btn btn-ghost" style={{ padding: "7px 13px" }}>Log out</button>
           </form>
+          <details className="relative md:hidden">
+            <summary className="grid h-9 w-9 cursor-pointer list-none place-items-center rounded-lg [&::-webkit-details-marker]:hidden" style={{ border: "1px solid var(--line)" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+            </summary>
+            <div className="absolute right-0 z-40 mt-2 flex w-52 flex-col rounded-xl p-2 text-sm shadow-lg" style={{ background: "var(--surface)", border: "1px solid var(--line)" }}>
+              {items.map((it) => <a key={it.href} href={it.href} className="rounded-lg px-3 py-2" style={{ color: "var(--ink)" }}>{it.label}</a>)}
+              <form action={logoutAction}><button className="w-full rounded-lg px-3 py-2 text-left" style={{ color: "var(--neg)" }}>Log out</button></form>
+            </div>
+          </details>
         </div>
       </div>
     </header>
