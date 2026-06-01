@@ -22,11 +22,11 @@ const roofersOffers: Offer[] = [
 ];
 
 const godTheme: TenantTheme = {
-  primary: "#111827",
-  secondary: "#1f2937",
-  accent: "#6366f1",
-  background: "#0b1020",
-  foreground: "#e5e7eb",
+  primary: "#0e7490",
+  secondary: "#155e75",
+  accent: "#f97316",
+  background: "#ffffff",
+  foreground: "#0f2a33",
   fontFamily: "system-ui, sans-serif",
 };
 

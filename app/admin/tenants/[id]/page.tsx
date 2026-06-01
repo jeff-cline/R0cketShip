@@ -2,7 +2,7 @@ import { requireAuth } from "@/src/auth/guard";
 import { db } from "@/src/db/client";
 import { tenants } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
-import { THEME_PRESETS } from "@/src/tenant/manage";
+import { NAMED_PRESETS } from "@/src/tenant/manage";
 import { notFound } from "next/navigation";
 import { saveConfigAction } from "./actions";
 import { ThemeEditor } from "@/app/admin/ThemeEditor";
@@ -35,7 +35,7 @@ export default async function TenantEditPage({ params }: { params: Promise<{ id:
           );
         })}
         <textarea name="footerHtml" defaultValue={t.footerHtml} placeholder="footer HTML" className="col-span-2 rounded border p-2" rows={3} />
-        <ThemeEditor theme={t.theme as any} style={t.style} presets={THEME_PRESETS} />
+        <ThemeEditor theme={t.theme as any} style={t.style} presets={NAMED_PRESETS} />
         <button className="col-span-2 mt-2 rounded bg-black px-4 py-2 text-white">Save config</button>
       </form>
       <a href={`https://${t.domain}/`} target="_blank" className="mt-4 inline-block text-sm underline">View site →</a>

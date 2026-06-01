@@ -16,6 +16,24 @@ export const THEME_PRESETS: TenantTheme[] = [
   { primary: "#111827", secondary: "#1f2937", accent: "#ef4444", background: "#ffffff", foreground: "#111827", fontFamily: "system-ui, sans-serif" },
 ];
 
+export const ROCKETSHIP_THEME: TenantTheme = {
+  primary: "#0e7490",
+  secondary: "#155e75",
+  accent: "#f97316",
+  background: "#ffffff",
+  foreground: "#0f2a33",
+  fontFamily: "system-ui, sans-serif",
+};
+
+export const NAMED_PRESETS: { name: string; theme: TenantTheme }[] = [
+  { name: "R0cketShip", theme: ROCKETSHIP_THEME },
+  { name: "Roofing", theme: THEME_PRESETS[0] },
+  { name: "Solar", theme: THEME_PRESETS[1] },
+  { name: "Violet", theme: THEME_PRESETS[2] },
+  { name: "Sky", theme: THEME_PRESETS[4] },
+  { name: "Slate", theme: THEME_PRESETS[5] },
+];
+
 export async function createTenant(input: {
   domain: string;
   niche: string;

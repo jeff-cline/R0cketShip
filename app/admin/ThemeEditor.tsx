@@ -4,7 +4,7 @@ import type { TenantTheme } from "@/src/tenant/types";
 
 const KEYS = ["primary", "secondary", "accent", "background", "foreground"] as const;
 
-export function ThemeEditor({ theme, style, presets }: { theme: TenantTheme; style: string; presets: TenantTheme[] }) {
+export function ThemeEditor({ theme, style, presets }: { theme: TenantTheme; style: string; presets: { name: string; theme: TenantTheme }[] }) {
   const [colors, setColors] = useState({
     primary: theme.primary, secondary: theme.secondary, accent: theme.accent,
     background: theme.background, foreground: theme.foreground,
@@ -33,7 +33,7 @@ export function ThemeEditor({ theme, style, presets }: { theme: TenantTheme; sty
       <div className="mt-3 flex items-center gap-2 text-xs">
         <span>Quick palettes:</span>
         {presets.map((p, i) => (
-          <button type="button" key={i} onClick={() => applyPreset(p)} title={`Preset ${i + 1}`} className="h-6 w-6 rounded-full border" style={{ background: p.accent }} />
+          <button type="button" key={i} onClick={() => applyPreset(p.theme)} title={p.name} className="h-6 w-6 rounded-full border" style={{ background: p.theme.accent }} />
         ))}
       </div>
     </div>
