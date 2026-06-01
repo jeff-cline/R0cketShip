@@ -71,6 +71,13 @@
       "when": 1780277003354,
       "tag": "0009_nice_vanisher",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780287606935,
+      "tag": "0010_nostalgic_blur",
+      "breakpoints": true
     }
   ]
 }

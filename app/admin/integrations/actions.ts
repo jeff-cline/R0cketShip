@@ -23,6 +23,11 @@ export async function saveIntegrationsAction(formData: FormData) {
     twilioAccountSid: plain("twilioAccountSid"),
     twilioAuthToken: secret("twilioAuthToken"),
     twilioFromNumber: plain("twilioFromNumber"),
+    smtpHost: plain("smtpHost"),
+    smtpPort: plain("smtpPort"),
+    smtpUser: plain("smtpUser"),
+    smtpPass: secret("smtpPass"),
+    smtpFrom: plain("smtpFrom"),
     activePaymentProvider: provider,
   });
   revalidatePath("/admin/integrations");

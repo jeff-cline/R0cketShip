@@ -212,6 +212,9 @@ export const customerIntegrations = pgTable("customer_integrations", {
   webhookUrl: text("webhook_url"),
   webhookSecret: text("webhook_secret"),
   active: boolean("active").notNull().default(true),
+  bookingUrl: text("booking_url"),
+  emailSubject: text("email_subject"),
+  emailBodyHtml: text("email_body_html"),
   lastStatus: text("last_status"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -227,6 +230,11 @@ export const tenantIntegrations = pgTable("tenant_integrations", {
   twilioAuthTokenEnc: text("twilio_auth_token_enc"),
   twilioFromNumber: text("twilio_from_number"),
   stripeWebhookSecretEnc: text("stripe_webhook_secret_enc"),
+  smtpHost: text("smtp_host"),
+  smtpPort: text("smtp_port"),
+  smtpUser: text("smtp_user"),
+  smtpPassEnc: text("smtp_pass_enc"),
+  smtpFrom: text("smtp_from"),
   activePaymentProvider: paymentProvider("active_payment_provider").notNull().default("manual"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -280,5 +288,17 @@ export const referrals = pgTable("referrals", {
   referredCustomerId: uuid("referred_customer_id").notNull().references(() => users.id).unique(),
   affiliateCustomerId: uuid("affiliate_customer_id").notNull().references(() => users.id),
   code: text("code").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailSendStatus = pgEnum("email_send_status", ["sent", "failed", "skipped"]);
+
+export const emailSends = pgTable("email_sends", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  customerId: uuid("customer_id").notNull().references(() => users.id),
+  deliveryId: uuid("delivery_id").notNull(),
+  leadEmail: text("lead_email"),
+  status: emailSendStatus("status").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
