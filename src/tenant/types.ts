@@ -32,4 +32,5 @@ export interface Tenant {
   footerHtml: string;
   activePaymentProvider: PaymentProvider;
   status: TenantStatus;
+  style: "trust" | "bold" | "dark";
 }

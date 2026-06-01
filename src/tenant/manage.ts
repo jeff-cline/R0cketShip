@@ -25,6 +25,7 @@ export async function createTenant(input: {
   monthlyPriceDefault?: string;
   footerHtml?: string;
   logoUrl?: string | null;
+  style?: "trust" | "bold" | "dark";
 }): Promise<TenantRow> {
   const domain = input.domain.toLowerCase().trim();
   if (!domain) throw new Error("domain required");
@@ -46,6 +47,7 @@ export async function createTenant(input: {
       status: "active",
       ingestKey: generateIngestKey(),
       signupBonusCredits: "50",
+      style: input.style ?? "bold",
     })
     .returning();
   return row;
@@ -64,6 +66,7 @@ export async function updateTenantConfig(
     footerHtml: string;
     activePaymentProvider: Provider;
     status: "active" | "inactive";
+    style: "trust" | "bold" | "dark";
   }>,
 ): Promise<void> {
   const set: Record<string, unknown> = {};

@@ -20,6 +20,15 @@ export async function saveConfigAction(formData: FormData) {
     logoUrl: String(formData.get("logoUrl") ?? "").trim() || null,
     footerHtml: String(formData.get("footerHtml") ?? ""),
     offers,
+    style: String(formData.get("style") ?? "bold") as "trust" | "bold" | "dark",
+    theme: {
+      primary: String(formData.get("primary") ?? "#0a3d62"),
+      secondary: String(formData.get("secondary") ?? "#3c6382"),
+      accent: String(formData.get("accent") ?? "#e58e26"),
+      background: String(formData.get("background") ?? "#ffffff"),
+      foreground: String(formData.get("foreground") ?? "#0b132b"),
+      fontFamily: "system-ui, sans-serif",
+    },
   });
   revalidatePath(`/admin/tenants/${id}`);
 }

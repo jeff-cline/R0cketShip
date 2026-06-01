@@ -14,6 +14,8 @@ import {
 import { sql } from "drizzle-orm";
 import type { TenantTheme, Offer } from "../tenant/types";
 
+export const siteStyle = pgEnum("site_style", ["trust", "bold", "dark"]);
+
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
   domain: text("domain").notNull().unique(),
@@ -35,6 +37,7 @@ export const tenants = pgTable("tenants", {
     .default("active"),
   ingestKey: text("ingest_key"),
   signupBonusCredits: numeric("signup_bonus_credits").notNull().default("50"),
+  style: siteStyle("style").notNull().default("bold"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

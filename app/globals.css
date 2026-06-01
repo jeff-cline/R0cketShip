@@ -15,3 +15,13 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-family);
 }
+
+:root {
+  --radius: 14px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.08);
+  --shadow-lg: 0 20px 48px rgba(0,0,0,.16);
+}
+body { font-family: var(--font-body), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--font-display), system-ui, sans-serif; letter-spacing: -0.02em; }
+.font-serif-display { font-family: var(--font-serif), Georgia, serif; letter-spacing: -0.01em; }
