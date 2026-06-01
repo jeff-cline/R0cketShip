@@ -1,60 +1,80 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { emailMailboxes } from "../db/schema";
-import { getOutboundSettings } from "./settings";
+import { encryptSecret } from "../crypto/secrets";
+import { getOutboundSettings, setOutboundSettings } from "./settings";
 
 /**
- * Key-gated Zapmail adapter. Zapmail (api.zapmail.ai) provisions Google/Microsoft
- * mailboxes; we import them into our sending pool. Sending still happens over each
- * mailbox's SMTP (app password), respecting the ~50/day per-mailbox cap.
+ * Zapmail adapter (api.zapmail.ai). Zapmail provisions Google/Microsoft mailboxes;
+ * `/mailboxes/list` returns each mailbox WITH its app password, so we can import a
+ * mailbox into a white-label's sending pool fully active (SMTP user = email,
+ * pass = app password). Sending is over SMTP, ~50/day per mailbox.
  *
- * Activates only when a tenant has a Zapmail API key saved. Endpoints follow the
- * documented base/headers; parsing is defensive so an API shape change can't break
- * the UI (returns an empty list + reason instead of throwing).
+ * Auth: header `x-auth-zapmail: <apiKey>`, plus `x-workspace-key` and
+ * `x-service-provider: GOOGLE|MICROSOFT`. The workspace key auto-resolves from
+ * `/workspaces` (currentWorkspace.id).
  */
-const BASE = "https://api.zapmail.ai/api";
+const BASE = "https://api.zapmail.ai/api/v2";
+
+async function zmFetch(path: string, apiKey: string, workspaceKey: string | null, provider: "GOOGLE" | "MICROSOFT" = "GOOGLE"): Promise<unknown> {
+  const res = await fetch(`${BASE}${path}`, {
+    headers: {
+      "x-auth-zapmail": apiKey,
+      ...(workspaceKey ? { "x-workspace-key": workspaceKey } : {}),
+      "x-service-provider": provider,
+    },
+  });
+  if (!res.ok) throw new Error(`Zapmail API ${res.status}`);
+  return res.json();
+}
+
+export async function resolveWorkspaceKey(apiKey: string): Promise<string | null> {
+  try {
+    const j = (await zmFetch("/workspaces", apiKey, null)) as { data?: { currentWorkspace?: { id?: string } } };
+    return j?.data?.currentWorkspace?.id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export interface ZapmailMailbox {
   zapmailId: string | null;
-  address: string;
+  email: string;
+  displayName: string | null;
+  appPassword: string;
+  domain: string | null;
+  status: string | null;
+  isWarmedUp: boolean;
   provider: "zapmail-google" | "zapmail-microsoft";
-  smtpHost: string | null;
-  smtpUser: string | null;
-}
-
-export async function zapmailConfigured(tenantId: string): Promise<boolean> {
-  const s = await getOutboundSettings(tenantId);
-  return Boolean(s.zapmailApiKey);
 }
 
 export async function listZapmailMailboxes(
   apiKey: string,
   workspaceKey: string | null,
-  serviceProvider: "GOOGLE" | "MICROSOFT" = "GOOGLE",
+  provider: "GOOGLE" | "MICROSOFT" = "GOOGLE",
 ): Promise<{ mailboxes: ZapmailMailbox[]; error?: string }> {
   try {
-    const res = await fetch(`${BASE}/v2/mailboxes`, {
-      headers: {
-        "x-auth-zapmail": apiKey,
-        ...(workspaceKey ? { "x-workspace-key": workspaceKey } : {}),
-        "x-service-provider": serviceProvider,
-      },
-    });
-    if (!res.ok) return { mailboxes: [], error: `Zapmail API ${res.status}` };
-    const data: unknown = await res.json();
-    const list: unknown[] = Array.isArray(data) ? data : Array.isArray((data as { mailboxes?: unknown[] })?.mailboxes) ? (data as { mailboxes: unknown[] }).mailboxes : Array.isArray((data as { data?: unknown[] })?.data) ? (data as { data: unknown[] }).data : [];
+    const j = (await zmFetch("/mailboxes/list", apiKey, workspaceKey, provider)) as {
+      data?: { domains?: Array<{ domain?: string; mailboxes?: Array<Record<string, unknown>> }> };
+    };
+    const domains = j?.data?.domains ?? [];
     const mailboxes: ZapmailMailbox[] = [];
-    for (const item of list) {
-      const o = item as Record<string, unknown>;
-      const address = String(o.email ?? o.address ?? o.username ?? o.emailAddress ?? "").trim();
-      if (!address.includes("@")) continue;
-      mailboxes.push({
-        zapmailId: o.id ? String(o.id) : null,
-        address: address.toLowerCase(),
-        provider: serviceProvider === "MICROSOFT" ? "zapmail-microsoft" : "zapmail-google",
-        smtpHost: o.smtpHost ? String(o.smtpHost) : serviceProvider === "MICROSOFT" ? "smtp.office365.com" : "smtp.gmail.com",
-        smtpUser: address.toLowerCase(),
-      });
+    for (const d of domains) {
+      for (const m of d.mailboxes ?? []) {
+        const email = String(m.email ?? "").trim().toLowerCase();
+        if (!email.includes("@")) continue;
+        const name = [m.firstName, m.lastName].filter(Boolean).join(" ").trim();
+        mailboxes.push({
+          zapmailId: m.id ? String(m.id) : null,
+          email,
+          displayName: name || null,
+          appPassword: String(m.appPassword ?? "").replace(/\s+/g, ""),
+          domain: (m.domain as string) ?? d.domain ?? null,
+          status: m.status ? String(m.status) : null,
+          isWarmedUp: Boolean(m.isWarmedUp),
+          provider: provider === "MICROSOFT" ? "zapmail-microsoft" : "zapmail-google",
+        });
+      }
     }
     return { mailboxes };
   } catch (e) {
@@ -62,35 +82,56 @@ export async function listZapmailMailboxes(
   }
 }
 
-/**
- * Import Zapmail mailboxes into the pool for a tenant. Created mailboxes start
- * PAUSED with no SMTP password — the owner adds each mailbox's app password to
- * activate it (Zapmail's API does not expose passwords).
- */
-export async function importZapmailMailboxes(tenantId: string): Promise<{ imported: number; found: number; error?: string }> {
+export async function zapmailConfigured(tenantId: string): Promise<boolean> {
   const s = await getOutboundSettings(tenantId);
-  if (!s.zapmailApiKey) return { imported: 0, found: 0, error: "no Zapmail API key" };
-  const { mailboxes, error } = await listZapmailMailboxes(s.zapmailApiKey, s.zapmailWorkspaceKey);
-  if (error) return { imported: 0, found: 0, error };
+  return Boolean(s.zapmailApiKey);
+}
 
-  let imported = 0;
-  for (const m of mailboxes) {
-    const exists = (
-      await db.select({ id: emailMailboxes.id }).from(emailMailboxes).where(and(eq(emailMailboxes.tenantId, tenantId), eq(emailMailboxes.address, m.address))).limit(1)
-    )[0];
-    if (exists) continue;
-    await db.insert(emailMailboxes).values({
-      tenantId,
-      address: m.address,
-      provider: m.provider,
-      smtpHost: m.smtpHost,
-      smtpPort: "587",
-      smtpUser: m.smtpUser,
-      zapmailId: m.zapmailId,
-      status: "paused", // needs an app password before it can send
-      dailyCap: 50,
-    });
-    imported++;
+/** List the Zapmail account's mailboxes using the key stored on `settingsTenantId` (the god tenant). */
+export async function fetchZapmailMailboxes(settingsTenantId: string): Promise<{ mailboxes: ZapmailMailbox[]; error?: string }> {
+  const s = await getOutboundSettings(settingsTenantId);
+  if (!s.zapmailApiKey) return { mailboxes: [], error: "no Zapmail API key" };
+  let wsk = s.zapmailWorkspaceKey;
+  if (!wsk) {
+    wsk = await resolveWorkspaceKey(s.zapmailApiKey);
+    if (wsk) await setOutboundSettings(settingsTenantId, { zapmailWorkspaceKey: wsk });
   }
-  return { imported, found: mailboxes.length };
+  return listZapmailMailboxes(s.zapmailApiKey, wsk);
+}
+
+function smtpHostFor(provider: ZapmailMailbox["provider"]): string {
+  return provider === "zapmail-microsoft" ? "smtp.office365.com" : "smtp.gmail.com";
+}
+
+/** Assign one Zapmail mailbox into a target white-label's pool (active, with SMTP creds). */
+export async function assignMailboxToTenant(targetTenantId: string, m: ZapmailMailbox): Promise<void> {
+  const values = {
+    tenantId: targetTenantId,
+    address: m.email,
+    displayName: m.displayName,
+    provider: m.provider,
+    smtpHost: smtpHostFor(m.provider),
+    smtpPort: "587",
+    smtpUser: m.email,
+    smtpPassEnc: m.appPassword ? encryptSecret(m.appPassword) : null,
+    zapmailId: m.zapmailId,
+    status: (m.appPassword ? "active" : "paused") as "active" | "paused",
+    dailyCap: 50,
+  };
+  const existing = (
+    await db.select({ id: emailMailboxes.id }).from(emailMailboxes).where(and(eq(emailMailboxes.tenantId, targetTenantId), eq(emailMailboxes.address, m.email))).limit(1)
+  )[0];
+  if (existing) {
+    await db.update(emailMailboxes).set(values).where(eq(emailMailboxes.id, existing.id));
+  } else {
+    await db.insert(emailMailboxes).values(values);
+  }
+}
+
+/** Import all Zapmail mailboxes into one tenant's pool (uses the key stored on that tenant). */
+export async function importZapmailMailboxes(tenantId: string): Promise<{ imported: number; found: number; error?: string }> {
+  const { mailboxes, error } = await fetchZapmailMailboxes(tenantId);
+  if (error) return { imported: 0, found: 0, error };
+  for (const m of mailboxes) await assignMailboxToTenant(tenantId, m);
+  return { imported: mailboxes.length, found: mailboxes.length };
 }

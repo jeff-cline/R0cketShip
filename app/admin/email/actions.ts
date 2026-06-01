@@ -6,7 +6,7 @@ import { db } from "@/src/db/client";
 import { emailMailboxes } from "@/src/db/schema";
 import { encryptSecret } from "@/src/crypto/secrets";
 import { setOutboundSettings } from "@/src/email/settings";
-import { importZapmailMailboxes } from "@/src/email/zapmail";
+import { importZapmailMailboxes, fetchZapmailMailboxes, assignMailboxToTenant } from "@/src/email/zapmail";
 import { sendViaPool } from "@/src/email/mailbox";
 
 const f = (formData: FormData, k: string) => String(formData.get(k) ?? "").trim();
@@ -72,6 +72,19 @@ export async function deleteMailboxAction(formData: FormData) {
 export async function importZapmailAction() {
   const ctx = await requireAuth(["god", "manager"]);
   await importZapmailMailboxes(ctx.user.tenantId);
+  revalidatePath("/admin/email");
+}
+
+/** God: assign one Zapmail account mailbox to a chosen white-label's sending pool. */
+export async function assignZapmailAction(formData: FormData) {
+  const ctx = await requireAuth(["god"]);
+  const email = f(formData, "email");
+  const targetTenantId = f(formData, "targetTenantId");
+  if (!email || !targetTenantId) return;
+  // Re-fetch live (with app passwords) using the platform key on the god tenant.
+  const { mailboxes } = await fetchZapmailMailboxes(ctx.user.tenantId);
+  const m = mailboxes.find((x) => x.email === email.toLowerCase());
+  if (m) await assignMailboxToTenant(targetTenantId, m);
   revalidatePath("/admin/email");
 }
 
