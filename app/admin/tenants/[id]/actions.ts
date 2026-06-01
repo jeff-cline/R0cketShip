@@ -1,43 +1,67 @@
 "use server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireAuth } from "@/src/auth/guard";
-import { updateTenantConfig, THEME_PRESETS } from "@/src/tenant/manage";
+import { updateTenantConfig } from "@/src/tenant/manage";
+import type { Offer } from "@/src/tenant/types";
 
-export async function saveConfigAction(formData: FormData) {
+function clamp01(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function emptyToNull(v: unknown): string | null {
+  const s = String(v ?? "").trim();
+  return s || null;
+}
+
+export async function updateAction(formData: FormData) {
   await requireAuth(["god"]);
   const id = String(formData.get("id") ?? "");
-  const offers = [1, 2, 3].map((i) => ({
-    id: i,
-    title: String(formData.get(`o${i}t`) ?? "").trim(),
-    description: String(formData.get(`o${i}d`) ?? "").trim(),
-    price: String(formData.get(`o${i}p`) ?? "").trim(),
-  })).filter((o) => o.title);
+
+  const offers: Offer[] = [1, 2, 3]
+    .map((i) => ({
+      id: i,
+      title: String(formData.get(`o${i}t`) ?? "").trim(),
+      description: String(formData.get(`o${i}d`) ?? "").trim(),
+      price: String(formData.get(`o${i}p`) ?? "").trim(),
+      features: String(formData.get(`o${i}f`) ?? "")
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    }))
+    .filter((o) => o.title);
+
+  const theme = {
+    primary: String(formData.get("primary") ?? "#0a3d62"),
+    secondary: String(formData.get("secondary") ?? "#3c6382"),
+    accent: String(formData.get("accent") ?? "#e58e26"),
+    background: String(formData.get("background") ?? "#ffffff"),
+    foreground: String(formData.get("foreground") ?? "#0b132b"),
+    fontFamily: "system-ui, sans-serif",
+  };
+  const style = String(formData.get("style") ?? "bold") as "trust" | "bold" | "dark";
+  const status = String(formData.get("status") ?? "active") as "active" | "inactive";
+
+  const platformFeeRate = clamp01(Number(formData.get("platformFeePct") || 60) / 100).toString();
+  const dataCostRate = clamp01(Number(formData.get("dataCostPct") || 0) / 100).toString();
+
   await updateTenantConfig(id, {
     moneyWord: String(formData.get("moneyWord") ?? ""),
     niche: String(formData.get("niche") ?? ""),
+    theme,
+    offers,
+    style,
     monthlyPriceDefault: String(formData.get("monthlyPriceDefault") ?? "").trim() || "1500",
     signupBonusCredits: String(formData.get("signupBonusCredits") ?? "").trim() || "50",
-    logoUrl: String(formData.get("logoUrl") ?? "").trim() || null,
-    footerHtml: String(formData.get("footerHtml") ?? ""),
-    offers,
-    style: String(formData.get("style") ?? "bold") as "trust" | "bold" | "dark",
-    theme: {
-      primary: String(formData.get("primary") ?? "#0a3d62"),
-      secondary: String(formData.get("secondary") ?? "#3c6382"),
-      accent: String(formData.get("accent") ?? "#e58e26"),
-      background: String(formData.get("background") ?? "#ffffff"),
-      foreground: String(formData.get("foreground") ?? "#0b132b"),
-      fontFamily: "system-ui, sans-serif",
-    },
+    status,
+    heroImage: emptyToNull(formData.get("heroImage")),
+    heroHeadline: emptyToNull(formData.get("heroHeadline")),
+    heroSubhead: emptyToNull(formData.get("heroSubhead")),
+    platformFeeRate,
+    dataCostRate,
   });
-  revalidatePath(`/admin/tenants/${id}`);
-}
 
-export async function regenerateThemeAction(formData: FormData) {
-  await requireAuth(["god"]);
-  const id = String(formData.get("id") ?? "");
-  const cur = Number(formData.get("themeIdx") ?? 0);
-  const next = (cur + 1) % THEME_PRESETS.length;
-  await updateTenantConfig(id, { theme: THEME_PRESETS[next] });
   revalidatePath(`/admin/tenants/${id}`);
+  redirect(`/admin/tenants/${id}`);
 }

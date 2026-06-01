@@ -7,12 +7,20 @@ export interface MarketingContent {
   moneyWord: string;
   niche: string;
   offers: { id: number; title: string; description: string; price: string }[];
+  /** Hero H1 — tenant override when set, else the money word. */
+  headline: string;
   subhead: string;
+  /** Optional hero image URL from the tenant. */
+  heroImage: string | null;
   features: MFeature[];
   stats: MStat[];
   testimonials: MTestimonial[];
   footerHtml: string;
   steps: { title: string; desc: string }[];
+}
+
+function titleCase(s: string): string {
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function marketingContent(tenant: Tenant): MarketingContent {
@@ -22,7 +30,11 @@ export function marketingContent(tenant: Tenant): MarketingContent {
     niche,
     offers: tenant.offers,
     footerHtml: tenant.footerHtml,
-    subhead: `High-intent ${niche} customers actively looking — in your exclusive ZIP, delivered daily to your CRM.`,
+    headline: tenant.heroHeadline || titleCase(tenant.moneyWord),
+    heroImage: tenant.heroImage,
+    subhead:
+      tenant.heroSubhead ||
+      `High-intent ${niche} customers actively looking — in your exclusive ZIP, delivered daily to your CRM.`,
     features: [
       { icon: "◎", title: "Predictive intent", desc: `Reach ${niche} buyers acting like past closers — before your competitors.` },
       { icon: "⌖", title: "Door-knock lists", desc: "Optimized address lists so your crews waste zero doors." },

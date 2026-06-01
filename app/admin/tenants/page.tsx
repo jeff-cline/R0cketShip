@@ -1,25 +1,67 @@
 import { requireAuth } from "@/src/auth/guard";
 import { db } from "@/src/db/client";
 import { tenants } from "@/src/db/schema";
+import { tenantEconomics } from "@/src/reporting/economics";
+import { PageHeader, Card, Badge } from "@/app/_ui/primitives";
+
+const usd = (n: number) => (n >= 1000 ? "$" + (n / 1000).toFixed(1) + "k" : "$" + n.toFixed(0));
 
 export default async function TenantsPage() {
   await requireAuth(["god"]);
   const rows = await db.select().from(tenants).orderBy(tenants.domain);
+
+  const withEcon = [];
+  for (const t of rows) {
+    const e = await tenantEconomics({ id: t.id, platformFeeRate: t.platformFeeRate, dataCostRate: t.dataCostRate });
+    withEcon.push({ t, e });
+  }
+
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">White-labels</h1>
-        <a href="/admin/launch" className="rounded bg-black px-3 py-2 text-sm text-white">+ Launch</a>
-      </div>
-      <ul className="mt-4 space-y-2 text-sm">
-        {rows.map((t) => (
-          <li key={t.id} className="flex items-center gap-3 rounded border p-3">
-            <span className="font-medium">{t.domain}</span>
-            <span className="opacity-70">{t.niche} · {t.status}</span>
-            <a href={`/admin/tenants/${t.id}`} className="ml-auto underline">Edit</a>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <>
+      <PageHeader
+        title="White-labels"
+        subtitle={`${rows.length} niche sites on the platform.`}
+        actions={<a className="btn btn-primary" href="/admin/launch">+ Add white-label</a>}
+      />
+
+      {withEcon.length === 0 ? (
+        <Card>
+          <div className="py-8 text-center text-sm" style={{ color: "var(--muted)" }}>
+            No white-labels yet.{" "}
+            <a className="underline" href="/admin/launch">Add your first one</a>.
+          </div>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {withEcon.map(({ t, e }) => (
+            <Card key={t.id}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold">{t.domain}</span>
+                <Badge tone={t.status === "active" ? "pos" : "neutral"}>{t.status}</Badge>
+              </div>
+              <div className="mt-1 text-sm" style={{ color: "var(--muted)" }}>{t.niche}</div>
+
+              <div className="my-4 border-t" style={{ borderColor: "var(--line)" }} />
+
+              <div className="flex items-center justify-between text-sm">
+                <div>
+                  <div className="label">Sales</div>
+                  <div className="font-bold">{usd(e.sales)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="label">Your 60%</div>
+                  <div className="font-bold" style={{ color: "var(--color-accent)" }}>{usd(e.platformRevenue)}</div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <a className="btn btn-ghost" href={`/admin/tenants/${t.id}`}>Manage</a>
+                <a className="btn btn-ghost" href={`https://${t.domain}`} target="_blank">Visit ↗</a>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
