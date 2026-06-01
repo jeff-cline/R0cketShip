@@ -38,6 +38,14 @@ export const tenants = pgTable("tenants", {
   ingestKey: text("ingest_key"),
   signupBonusCredits: numeric("signup_bonus_credits").notNull().default("50"),
   style: siteStyle("style").notNull().default("bold"),
+  // Economics: r0cketship's cut of each white-label sale, and the data cost rate
+  // used to compute r0cketship's gross profit. Both fractions in [0,1].
+  platformFeeRate: numeric("platform_fee_rate").notNull().default("0.60"),
+  dataCostRate: numeric("data_cost_rate").notNull().default("0.00"),
+  // Hero overrides (fall back to generated marketing content when null).
+  heroImage: text("hero_image"),
+  heroHeadline: text("hero_headline"),
+  heroSubhead: text("hero_subhead"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

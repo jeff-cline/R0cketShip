@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Default theme tokens. Per-tenant values override these on <html> at runtime. */
+/* ---- Per-tenant brand tokens (overridden on <html> at runtime) ---- */
 :root {
   --color-primary: #1f2937;
   --color-secondary: #374151;
@@ -10,18 +10,106 @@
   --font-family: system-ui, sans-serif;
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-family);
+/* ---- Premium design system (fixed neutral foundation, accent pops) ---- */
+:root {
+  /* neutral ink + surfaces */
+  --ink: #0a0e17;
+  --ink-2: #1b2433;
+  --muted: #61708a;
+  --muted-2: #8b97ad;
+  --line: #e6eaf1;
+  --line-strong: #d3dae6;
+  --surface: #ffffff;
+  --surface-2: #f7f9fc;
+  --surface-3: #eef2f8;
+  --bg-app: #f4f6fb;
+
+  /* dark sidebar palette */
+  --side-bg: #0a0e17;
+  --side-bg-2: #111726;
+  --side-line: #1e2940;
+  --side-ink: #c7d2e4;
+  --side-muted: #6b7a96;
+
+  /* signal colors */
+  --pos: #16a34a;
+  --neg: #e11d48;
+  --warn: #d97706;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Linear/Vercel-grade subtle depth */
+  --shadow-sm: 0 1px 2px rgba(10,14,23,.04), 0 1px 3px rgba(10,14,23,.06);
+  --shadow-md: 0 4px 16px rgba(10,14,23,.06), 0 1px 3px rgba(10,14,23,.05);
+  --shadow-lg: 0 24px 60px -12px rgba(10,14,23,.22);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
-:root {
-  --radius: 14px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-md: 0 8px 24px rgba(0,0,0,.08);
-  --shadow-lg: 0 20px 48px rgba(0,0,0,.16);
+body {
+  background: var(--bg-app);
+  color: var(--ink);
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-body { font-family: var(--font-body), system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-h1, h2, h3 { font-family: var(--font-display), system-ui, sans-serif; letter-spacing: -0.02em; }
+h1, h2, h3, h4 { font-family: var(--font-display), system-ui, sans-serif; letter-spacing: -0.02em; color: var(--ink); }
 .font-serif-display { font-family: var(--font-serif), Georgia, serif; letter-spacing: -0.01em; }
+
+/* Blueprint grid texture — the 2026 "technical grid" look */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--line) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--line) 60%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.grid-bg-dark {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Reusable component classes (composed with Tailwind utilities) */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--ink);
+  transition: border-color .15s, box-shadow .15s;
+}
+.input::placeholder { color: var(--muted-2); }
+.input:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--ring); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-weight: 600; font-size: 14px; line-height: 1;
+  padding: 11px 16px; border-radius: var(--radius);
+  transition: transform .06s ease, box-shadow .15s, background .15s, border-color .15s;
+  cursor: pointer; white-space: nowrap;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--color-accent); color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--color-accent) 70%, transparent); }
+.btn-primary:hover { filter: brightness(1.06); }
+.btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); }
+.btn-ghost:hover { background: var(--surface-2); border-color: var(--muted-2); }
+.btn-dark { background: var(--ink); color: #fff; }
+.btn-dark:hover { background: var(--ink-2); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: var(--surface-3); color: var(--ink-2);
+}
+.label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
