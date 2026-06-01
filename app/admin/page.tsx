@@ -22,7 +22,7 @@ export default async function AdminPage() {
           <input name="email" type="email" placeholder="user@email" required className="rounded border p-2" />
           <input name="tenantId" placeholder="tenant uuid" required className="rounded border p-2" />
           <input name="tempPassword" placeholder="temp password" required className="rounded border p-2" />
-          <select name="role" className="rounded border p-2"><option value="manager">manager</option><option value="customer">customer</option></select>
+          <select name="role" className="rounded border p-2"><option value="manager">manager</option><option value="customer">customer</option><option value="agent">agent</option></select>
           <button className="rounded bg-black px-3 py-2 text-white">Create user</button>
         </form>
         <ul className="mt-4 list-disc pl-6">
