@@ -40,6 +40,7 @@ export async function getTenantByHost(host: string): Promise<Tenant | null> {
     platformFeeRate: row.platformFeeRate,
     dataCostRate: row.dataCostRate,
     heroImage: row.heroImage,
+    heroVideo: row.heroVideo,
     heroHeadline: row.heroHeadline,
     heroSubhead: row.heroSubhead,
   };

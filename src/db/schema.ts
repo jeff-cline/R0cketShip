@@ -44,6 +44,7 @@ export const tenants = pgTable("tenants", {
   dataCostRate: numeric("data_cost_rate").notNull().default("0.00"),
   // Hero overrides (fall back to generated marketing content when null).
   heroImage: text("hero_image"),
+  heroVideo: text("hero_video"),
   heroHeadline: text("hero_headline"),
   heroSubhead: text("hero_subhead"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
