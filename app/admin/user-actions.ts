@@ -6,7 +6,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/src/db/client";
 import { users, tenants } from "@/src/db/schema";
 import { requireAuth } from "@/src/auth/guard";
-import { createUser, resetUserPassword } from "@/src/auth/users";
+import { createUser, resetUserPassword, setUserPassword } from "@/src/auth/users";
 import { startImpersonation } from "@/src/auth/impersonate";
 import { SESSION_COOKIE } from "@/src/auth/session";
 
@@ -56,6 +56,20 @@ export async function createUserAction(formData: FormData) {
     { tenantId, email: String(formData.get("email") ?? ""), role, tempPassword: String(formData.get("tempPassword") ?? "") },
   );
   redirect(ctx.user.role === "god" ? "/admin" : "/manage");
+}
+
+export async function setUserPasswordAction(formData: FormData) {
+  const ctx = await requireAuth(["god", "manager"]);
+  const userId = String(formData.get("userId") ?? "");
+  const password = String(formData.get("password") ?? "");
+  if (userId && password.length >= 6) {
+    try {
+      await setUserPassword({ role: ctx.user.role, tenantId: ctx.user.tenantId }, userId, password);
+    } catch {
+      // not authorized — ignore
+    }
+  }
+  redirect(ctx.user.role === "god" ? "/admin/users?set=1" : "/manage");
 }
 
 export async function resetUserAction(formData: FormData) {

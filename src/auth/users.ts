@@ -81,6 +81,25 @@ export async function resetUserPassword(actor: Actor, userId: string, tempPasswo
   return row;
 }
 
+/**
+ * Set a known, ready-to-use login password (no forced reset) — for handing a
+ * white-label owner their credentials. Same authorization as a reset.
+ */
+export async function setUserPassword(actor: Actor, userId: string, password: string): Promise<UserRow> {
+  const target = (await db.select().from(users).where(eq(users.id, userId)).limit(1))[0];
+  if (!target) throw new Error("User not found");
+  if (!canResetPassword(actor, { tenantId: target.tenantId, role: target.role })) {
+    throw new Error("Not authorized");
+  }
+  const passwordHash = await hashPassword(password);
+  const [row] = await db
+    .update(users)
+    .set({ passwordHash, mustResetPassword: false })
+    .where(eq(users.id, userId))
+    .returning();
+  return row;
+}
+
 export async function listUsers(actor: Actor): Promise<UserRow[]> {
   const filter = tenantFilter(actor);
   if (filter === null) return db.select().from(users);
