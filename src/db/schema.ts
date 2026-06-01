@@ -217,6 +217,17 @@ export const leadDeliveries = pgTable(
   (t) => [uniqueIndex("lead_deliveries_customer_lead_uniq").on(t.customerId, t.leadId)],
 );
 
+// Timestamped CRM activity log per delivered lead (notes + disposition changes).
+export const leadNotes = pgTable("lead_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  deliveryId: uuid("delivery_id").notNull().references(() => leadDeliveries.id),
+  tenantId: uuid("tenant_id").notNull(),
+  customerId: uuid("customer_id").notNull().references(() => users.id),
+  body: text("body"),
+  disposition: text("disposition"), // status set alongside this note, if any
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const customerIntegrations = pgTable("customer_integrations", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull(),

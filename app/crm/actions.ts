@@ -2,6 +2,23 @@
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/src/auth/guard";
 import { updateDelivery } from "@/src/delivery/crm";
+import { addLeadNote, type DeliveryStatus } from "@/src/delivery/notes";
+
+export async function addNoteAction(formData: FormData) {
+  const ctx = await requireAuth(["customer"]);
+  const deliveryId = String(formData.get("deliveryId") ?? "");
+  const body = String(formData.get("body") ?? "");
+  const disposition = String(formData.get("disposition") ?? "") as DeliveryStatus | "";
+  const saleRaw = String(formData.get("saleValue") ?? "").trim();
+  const saleValue = saleRaw === "" ? undefined : Number.isNaN(Number(saleRaw)) ? null : Number(saleRaw);
+  try {
+    await addLeadNote(ctx.user.id, deliveryId, { body, disposition, saleValue });
+  } catch {
+    // not authorized / not found — ignore
+  }
+  revalidatePath(`/crm/${deliveryId}`);
+  revalidatePath("/crm");
+}
 
 export async function sendOfferEmailsAction() {
   const ctx = await requireAuth(["customer"]);

@@ -38,7 +38,7 @@ export default async function CrmPage() {
           {rows.map((r) => (
             <Tr key={r.deliveryId}>
               <Td>
-                <div className="font-medium">{r.firstName} {r.lastName}</div>
+                <a href={`/crm/${r.deliveryId}`} className="font-medium hover:underline" style={{ color: "var(--color-accent)" }}>{r.firstName} {r.lastName}</a>
                 <div className="text-xs" style={{ color: "var(--muted)" }}>{r.zip} {r.city}, {r.state}</div>
               </Td>
               <Td>
@@ -63,7 +63,10 @@ export default async function CrmPage() {
                 <input form={`crm-${r.deliveryId}`} name="notes" defaultValue={r.notes ?? ""} placeholder="notes" className="input w-full" />
               </Td>
               <Td>
-                <button form={`crm-${r.deliveryId}`} className="btn btn-ghost">Save</button>
+                <div className="flex items-center gap-2">
+                  <button form={`crm-${r.deliveryId}`} className="btn btn-ghost">Save</button>
+                  <a href={`/crm/${r.deliveryId}`} className="btn btn-ghost" style={{ padding: "6px 10px" }}>Open →</a>
+                </div>
               </Td>
             </Tr>
           ))}
