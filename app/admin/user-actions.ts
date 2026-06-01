@@ -38,6 +38,8 @@ export async function openAsWhiteLabelAction(formData: FormData) {
       { role: "god", tenantId: ctx.user.tenantId },
       { tenantId, email: `owner@${tenant.domain}`, role: "manager", tempPassword: randomBytes(18).toString("base64url") },
     );
+    // God manages this account by "Open as" — don't force a password reset on it.
+    await db.update(users).set({ mustResetPassword: false }).where(eq(users.id, target.id));
   }
 
   const impToken = await startImpersonation({ role: ctx.user.role, tenantId: ctx.user.tenantId }, target, token);

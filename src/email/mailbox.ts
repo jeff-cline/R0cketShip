@@ -1,7 +1,7 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import nodemailer from "nodemailer";
 import { db } from "../db/client";
-import { emailMailboxes, emailOutbound } from "../db/schema";
+import { emailMailboxes, emailOutbound, tenants } from "../db/schema";
 import { decryptSecret } from "../crypto/secrets";
 
 export type MailboxRow = typeof emailMailboxes.$inferSelect;
@@ -9,6 +9,26 @@ export type SendKind = "campaign" | "auto_reply" | "password_reset" | "manual";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+}
+
+/**
+ * The platform (god) tenant owns the shared Zapmail pool. Every white-label
+ * sends through it, so there's a single email system — no per-tenant setup.
+ */
+export async function platformTenantId(): Promise<string | null> {
+  const t = (await db.select({ id: tenants.id }).from(tenants).where(eq(tenants.domain, "r0cketship.com")).limit(1))[0];
+  return t?.id ?? null;
+}
+
+/** A tenant draws from its own mailboxes plus the shared platform pool. */
+async function poolTenantIds(tenantId: string): Promise<string[]> {
+  const platform = await platformTenantId();
+  return platform && platform !== tenantId ? [tenantId, platform] : [tenantId];
+}
+
+async function activeMailboxes(tenantId: string): Promise<MailboxRow[]> {
+  const ids = await poolTenantIds(tenantId);
+  return db.select().from(emailMailboxes).where(and(inArray(emailMailboxes.tenantId, ids), eq(emailMailboxes.status, "active")));
 }
 
 /** Remaining sends for a mailbox right now, accounting for the daily roll-over. */
@@ -23,22 +43,16 @@ export function remainingToday(m: MailboxRow): number {
  * spread evenly across the pool (better deliverability).
  */
 export async function pickMailbox(tenantId: string): Promise<MailboxRow | null> {
-  const all = await db
-    .select()
-    .from(emailMailboxes)
-    .where(and(eq(emailMailboxes.tenantId, tenantId), eq(emailMailboxes.status, "active")));
+  const all = await activeMailboxes(tenantId);
   const usable = all
     .filter((m) => m.smtpHost && m.smtpUser && m.smtpPassEnc && remainingToday(m) > 0)
     .sort((a, b) => remainingToday(b) - remainingToday(a));
   return usable[0] ?? null;
 }
 
-/** Total daily capacity / remaining across a tenant's active pool (for the dashboard). */
+/** Total daily capacity / remaining across a tenant's active pool incl. the shared platform pool. */
 export async function poolCapacity(tenantId: string): Promise<{ cap: number; remaining: number; mailboxes: number }> {
-  const all = await db
-    .select()
-    .from(emailMailboxes)
-    .where(and(eq(emailMailboxes.tenantId, tenantId), eq(emailMailboxes.status, "active")));
+  const all = await activeMailboxes(tenantId);
   return {
     mailboxes: all.length,
     cap: all.reduce((s, m) => s + m.dailyCap, 0),

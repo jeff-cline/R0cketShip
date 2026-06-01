@@ -6,7 +6,7 @@ import { db } from "@/src/db/client";
 import { emailMailboxes } from "@/src/db/schema";
 import { encryptSecret } from "@/src/crypto/secrets";
 import { setOutboundSettings } from "@/src/email/settings";
-import { importZapmailMailboxes, fetchZapmailMailboxes, assignMailboxToTenant } from "@/src/email/zapmail";
+import { importZapmailMailboxes } from "@/src/email/zapmail";
 import { sendViaPool } from "@/src/email/mailbox";
 
 const f = (formData: FormData, k: string) => String(formData.get(k) ?? "").trim();
@@ -75,30 +75,19 @@ export async function importZapmailAction() {
   revalidatePath("/admin/email");
 }
 
-/** God: assign one Zapmail account mailbox to a chosen white-label's sending pool. */
-export async function assignZapmailAction(formData: FormData) {
-  const ctx = await requireAuth(["god"]);
-  const email = f(formData, "email");
-  const targetTenantId = f(formData, "targetTenantId");
-  if (!email || !targetTenantId) return;
-  // Re-fetch live (with app passwords) using the platform key on the god tenant.
-  const { mailboxes } = await fetchZapmailMailboxes(ctx.user.tenantId);
-  const m = mailboxes.find((x) => x.email === email.toLowerCase());
-  if (m) await assignMailboxToTenant(targetTenantId, m);
-  revalidatePath("/admin/email");
-}
-
 export async function saveEmailSettingsAction(formData: FormData) {
   const ctx = await requireAuth(["god", "manager"]);
-  const apiKey = f(formData, "zapmailApiKey");
-  await setOutboundSettings(ctx.user.tenantId, {
-    // Secret: blank => keep existing (undefined); non-empty => set.
-    zapmailApiKey: apiKey === "" ? undefined : apiKey,
-    zapmailWorkspaceKey: f(formData, "zapmailWorkspaceKey") || null,
+  const patch: Parameters<typeof setOutboundSettings>[1] = {
     bookingUrl: f(formData, "bookingUrl") || null,
     autoReplyEnabled: formData.get("autoReplyEnabled") === "on",
     autoReplyHtml: f(formData, "autoReplyHtml") || null,
-  });
+  };
+  // Only god configures the shared Zapmail account key.
+  if (ctx.user.role === "god") {
+    const apiKey = f(formData, "zapmailApiKey");
+    patch.zapmailApiKey = apiKey === "" ? undefined : apiKey; // blank keeps existing
+  }
+  await setOutboundSettings(ctx.user.tenantId, patch);
   revalidatePath("/admin/email");
 }
 

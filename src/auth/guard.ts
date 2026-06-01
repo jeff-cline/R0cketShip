@@ -7,7 +7,9 @@ type Role = "god" | "manager" | "customer" | "agent";
 export async function requireAuth(allowed: Role[]) {
   const ctx = await getAuthContext();
   if (!ctx) redirect("/login");
-  if (ctx.user.mustResetPassword) redirect("/account/password");
+  // Skip the forced-reset gate while an admin is impersonating ("Open as") —
+  // god is dropping into the account, not the user logging in.
+  if (ctx.user.mustResetPassword && !ctx.impersonator) redirect("/account/password");
   if (!canAccess(ctx.user.role, allowed)) redirect("/login");
   return ctx;
 }

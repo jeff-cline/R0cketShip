@@ -42,12 +42,12 @@ export default async function AdminPage() {
           <AreaChart data={series.values} labels={series.labels} />
         </Card>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Card>
+        <div className="mt-6 grid gap-4 lg:grid-cols-5">
+          <Card className="lg:col-span-2">
             <SectionTitle>Your 60% by white-label</SectionTitle>
             <BarChart data={byTenant.slice(0, 8).map((t) => ({ label: t.domain, value: t.platformRevenue }))} />
           </Card>
-          <Card>
+          <Card className="lg:col-span-3">
             <SectionTitle>White-labels</SectionTitle>
             {byTenant.length === 0 ? (
               <div className="flex flex-col items-start gap-3">

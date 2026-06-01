@@ -5,17 +5,7 @@ import { emailMailboxes, emailOutbound, emailInbound, tenants } from "@/src/db/s
 import { poolCapacity } from "@/src/email/mailbox";
 import { getOutboundSettings, DEFAULT_AUTO_REPLY } from "@/src/email/settings";
 import { zapmailConfigured, fetchZapmailMailboxes } from "@/src/email/zapmail";
-import {
-  PageHeader,
-  Card,
-  SectionTitle,
-  StatCard,
-  Badge,
-  Field,
-  Table,
-  Tr,
-  Td,
-} from "@/app/_ui/primitives";
+import { PageHeader, Card, SectionTitle, StatCard, Badge, Field, Table, Tr, Td } from "@/app/_ui/primitives";
 import {
   addMailboxAction,
   updateMailboxAction,
@@ -23,21 +13,14 @@ import {
   importZapmailAction,
   saveEmailSettingsAction,
   sendTestEmailAction,
-  assignZapmailAction,
 } from "./actions";
 
 function fmt(d: Date | string | null | undefined): string {
   if (!d) return "—";
   const dt = typeof d === "string" ? new Date(d) : d;
   if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return dt.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
-
 function statusTone(s: string): "pos" | "neg" | "warn" | "neutral" {
   if (s === "sent") return "pos";
   if (s === "failed") return "neg";
@@ -52,287 +35,173 @@ export default async function EmailAdminPage() {
   const today = new Date().toISOString().slice(0, 10);
   const base = `https://${ctx.tenant.domain}`;
 
-  const [mailboxes, pool, settings, outbound, inbound, zapConfigured] = await Promise.all([
-    db.select().from(emailMailboxes).where(eq(emailMailboxes.tenantId, tenantId)).orderBy(asc(emailMailboxes.address)),
-    poolCapacity(tenantId),
-    getOutboundSettings(tenantId),
-    db.select().from(emailOutbound).where(eq(emailOutbound.tenantId, tenantId)).orderBy(desc(emailOutbound.createdAt)).limit(25),
-    db.select().from(emailInbound).where(eq(emailInbound.tenantId, tenantId)).orderBy(desc(emailInbound.receivedAt)).limit(25),
-    zapmailConfigured(tenantId),
-  ]);
+  const pool = await poolCapacity(tenantId);
+  const settings = await getOutboundSettings(tenantId);
 
-  // God-only: live Zapmail account mailboxes + which white-label each is assigned to.
-  let zapAccount: Awaited<ReturnType<typeof fetchZapmailMailboxes>> | null = null;
-  let allTenants: { id: string; domain: string }[] = [];
-  let assignedBy: Map<string, string[]> = new Map();
-  if (isGod && zapConfigured) {
-    const [za, ts, assigned] = await Promise.all([
-      fetchZapmailMailboxes(tenantId),
-      db.select({ id: tenants.id, domain: tenants.domain }).from(tenants).orderBy(asc(tenants.domain)),
-      db.select({ address: emailMailboxes.address, tenantId: emailMailboxes.tenantId }).from(emailMailboxes),
+  // God sees ALL white-labels' email activity (a copy of every white-label send
+  // lives in the platform view); a manager sees only their own tenant's.
+  const outboundQ = db.select().from(emailOutbound).orderBy(desc(emailOutbound.createdAt)).limit(30);
+  const inboundQ = db.select().from(emailInbound).orderBy(desc(emailInbound.receivedAt)).limit(30);
+  const outbound = isGod ? await outboundQ : await outboundQ.where(eq(emailOutbound.tenantId, tenantId));
+  const inbound = isGod ? await inboundQ : await inboundQ.where(eq(emailInbound.tenantId, tenantId));
+
+  // God-only: the shared Zapmail pool (mailboxes on the platform tenant) + Zapmail account status.
+  let sharedMailboxes: (typeof emailMailboxes.$inferSelect)[] = [];
+  let zapConfigured = false;
+  let zapCount = 0;
+  let zapError: string | undefined;
+  let domainById = new Map<string, string>();
+  if (isGod) {
+    const [mb, zc, tlist] = await Promise.all([
+      db.select().from(emailMailboxes).where(eq(emailMailboxes.tenantId, tenantId)).orderBy(asc(emailMailboxes.address)),
+      zapmailConfigured(tenantId),
+      db.select({ id: tenants.id, domain: tenants.domain }).from(tenants),
     ]);
-    zapAccount = za;
-    allTenants = ts;
-    const domainById = new Map(ts.map((t) => [t.id, t.domain]));
-    assignedBy = new Map();
-    for (const a of assigned) {
-      const arr = assignedBy.get(a.address) ?? [];
-      arr.push(domainById.get(a.tenantId) ?? a.tenantId);
-      assignedBy.set(a.address, arr);
+    sharedMailboxes = mb;
+    zapConfigured = zc;
+    domainById = new Map(tlist.map((t) => [t.id, t.domain]));
+    if (zc) {
+      const za = await fetchZapmailMailboxes(tenantId);
+      zapCount = za.mailboxes.length;
+      zapError = za.error;
     }
   }
+  const wl = (id: string) => domainById.get(id) ?? "—";
 
   return (
     <>
       <PageHeader
-        title="Outbound email"
-        subtitle="Send through your mailbox pool, watch sends & replies, auto-respond with your booking link."
+        title="Email"
+        subtitle={isGod ? "One shared Zapmail pool powers every white-label. Manage it here and watch all email activity." : "Your emails send through the platform's shared Zapmail pool."}
       />
 
       <div className="flex flex-col gap-6">
-        {/* 1. Capacity */}
+        {/* Capacity */}
         <Card>
-          <SectionTitle>Capacity</SectionTitle>
+          <SectionTitle>Daily capacity</SectionTitle>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <StatCard label="Mailboxes" value={String(pool.mailboxes)} />
+            <StatCard label="Mailboxes in pool" value={String(pool.mailboxes)} />
             <StatCard label="Daily capacity" value={String(pool.cap)} />
             <StatCard label="Remaining today" value={String(pool.remaining)} accent />
           </div>
           <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
-            Each mailbox sends ~50/day; add more mailboxes to scale.
+            {isGod
+              ? "Each mailbox sends ~50/day. All password resets, auto-replies and notifications across every white-label flow through this pool."
+              : "Capacity is shared across the platform. All your password resets and auto-replies send from here automatically — nothing to set up."}
           </p>
         </Card>
 
-        {/* God: Zapmail account — assign mailboxes to white-labels */}
+        {/* GOD: the shared Zapmail pool */}
         {isGod && (
           <Card>
-            <SectionTitle hint={zapAccount?.error ? `Zapmail: ${zapAccount.error}` : `${zapAccount?.mailboxes.length ?? 0} mailboxes in your Zapmail account`}>
-              Zapmail account
+            <SectionTitle hint={zapConfigured ? (zapError ? `Zapmail: ${zapError}` : `${zapCount} mailboxes in your Zapmail account`) : "Add your Zapmail key in Settings"}>
+              Zapmail pool
             </SectionTitle>
-            {!zapConfigured ? (
-              <p className="text-sm" style={{ color: "var(--muted)" }}>
-                Add your Zapmail API key in Settings below to manage and assign your account&apos;s mailboxes to white-labels.
-              </p>
-            ) : (zapAccount?.mailboxes.length ?? 0) === 0 ? (
-              <p className="text-sm" style={{ color: "var(--muted)" }}>
-                {zapAccount?.error ? `Couldn't reach Zapmail (${zapAccount.error}).` : "No mailboxes found in your Zapmail account yet."}
-              </p>
-            ) : (
-              <Table head={["Mailbox", "Domain", "Warm-up", "Assigned to", "Assign to white-label"]}>
-                {zapAccount!.mailboxes.map((m) => (
-                  <Tr key={m.email}>
-                    <Td>
-                      <div className="font-medium">{m.email}</div>
-                      {m.displayName && <div className="text-xs" style={{ color: "var(--muted)" }}>{m.displayName}</div>}
-                    </Td>
-                    <Td>{m.domain ?? "—"}</Td>
-                    <Td>
-                      <Badge tone={m.isWarmedUp ? "pos" : "warn"}>{m.isWarmedUp ? "warmed" : "warming"}</Badge>
-                    </Td>
-                    <Td>
-                      {(assignedBy.get(m.email) ?? []).length === 0 ? (
-                        <span className="text-xs" style={{ color: "var(--muted-2)" }}>—</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {(assignedBy.get(m.email) ?? []).map((d) => <span key={d} className="chip">{d}</span>)}
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <form action={importZapmailAction}>
+                <button className="btn btn-primary" disabled={!zapConfigured}>Sync from Zapmail</button>
+              </form>
+              <span className="text-xs" style={{ color: "var(--muted)" }}>
+                Pulls every mailbox from your Zapmail account into the shared pool — active immediately (app passwords come from Zapmail). Re-run anytime.
+              </span>
+            </div>
+            <Table head={["Mailbox", "Domain", "Today", "Cap", "Status", ""]}>
+              {sharedMailboxes.length === 0 ? (
+                <Tr><Td className="text-sm"><span style={{ color: "var(--muted)" }}>No mailboxes yet — click “Sync from Zapmail”.</span></Td><Td>{""}</Td><Td>{""}</Td><Td>{""}</Td><Td>{""}</Td><Td>{""}</Td></Tr>
+              ) : (
+                sharedMailboxes.map((m) => {
+                  const used = m.sentDate === today ? m.sentToday : 0;
+                  return (
+                    <Tr key={m.id}>
+                      <Td>
+                        <div className="font-medium">{m.address}</div>
+                        {m.displayName && <div className="text-xs" style={{ color: "var(--muted)" }}>{m.displayName}</div>}
+                      </Td>
+                      <Td>{m.address.split("@")[1] ?? "—"}</Td>
+                      <Td>{used}/{m.dailyCap}</Td>
+                      <Td>{m.dailyCap}</Td>
+                      <Td><Badge tone={m.status === "active" ? "pos" : "neutral"}>{m.status}</Badge></Td>
+                      <Td>
+                        <div className="flex items-center justify-end gap-2">
+                          <form action={updateMailboxAction} className="flex items-center gap-1.5">
+                            <input type="hidden" name="mailboxId" value={m.id} />
+                            <select name="status" defaultValue={m.status} className="input" style={{ padding: "5px 8px", width: "auto" }}>
+                              <option value="active">active</option>
+                              <option value="paused">paused</option>
+                            </select>
+                            <input name="dailyCap" type="number" min={1} defaultValue={m.dailyCap} className="input" style={{ padding: "5px 8px", width: "68px" }} />
+                            <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Save</button>
+                          </form>
+                          <form action={deleteMailboxAction}>
+                            <input type="hidden" name="mailboxId" value={m.id} />
+                            <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Remove</button>
+                          </form>
                         </div>
-                      )}
-                    </Td>
-                    <Td>
-                      <form action={assignZapmailAction} className="flex items-center gap-1.5">
-                        <input type="hidden" name="email" value={m.email} />
-                        <select name="targetTenantId" className="input" style={{ padding: "5px 8px", width: "auto" }}>
-                          {allTenants.map((t) => <option key={t.id} value={t.id}>{t.domain}</option>)}
-                        </select>
-                        <button className="btn btn-primary" style={{ padding: "5px 11px" }}>Assign</button>
-                      </form>
-                    </Td>
-                  </Tr>
-                ))}
-              </Table>
-            )}
-            <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
-              Assigning imports the mailbox (with its app password) into that white-label&apos;s sending pool — active immediately.
-            </p>
+                      </Td>
+                    </Tr>
+                  );
+                })
+              )}
+            </Table>
+
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm" style={{ color: "var(--muted)" }}>Add a mailbox manually (non-Zapmail SMTP)</summary>
+              <form action={addMailboxAction} className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Address"><input name="address" type="email" required placeholder="sales@yourdomain.com" className="input" /></Field>
+                <Field label="Display name"><input name="displayName" placeholder="Sales Team" className="input" /></Field>
+                <Field label="SMTP host"><input name="smtpHost" placeholder="smtp.gmail.com" className="input" /></Field>
+                <Field label="SMTP port"><input name="smtpPort" defaultValue="587" className="input" /></Field>
+                <Field label="SMTP user"><input name="smtpUser" placeholder="sales@yourdomain.com" className="input" /></Field>
+                <Field label="SMTP password"><input name="smtpPassword" type="password" placeholder="app password" className="input" /></Field>
+                <Field label="Daily cap"><input name="dailyCap" type="number" min={1} defaultValue={50} className="input" /></Field>
+                <div className="flex items-end"><button className="btn btn-ghost">Add mailbox</button></div>
+              </form>
+            </details>
           </Card>
         )}
 
-        {/* 2. Mailboxes */}
-        <Card>
-          <SectionTitle>Mailboxes</SectionTitle>
-          <Table head={["Address", "Provider", "Today", "Cap", "Status", ""]}>
-            {mailboxes.length === 0 ? (
-              <Tr>
-                <Td className="text-sm">
-                  <span style={{ color: "var(--muted)" }}>No mailboxes yet — add one below.</span>
-                </Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-              </Tr>
-            ) : (
-              mailboxes.map((m) => {
-                const used = m.sentDate === today ? m.sentToday : 0;
-                return (
-                  <Tr key={m.id}>
-                    <Td>
-                      <div className="font-medium">{m.address}</div>
-                      {m.displayName && (
-                        <div className="text-xs" style={{ color: "var(--muted)" }}>{m.displayName}</div>
-                      )}
-                    </Td>
-                    <Td>
-                      <span className="chip">{m.provider}</span>
-                    </Td>
-                    <Td>{used}/{m.dailyCap}</Td>
-                    <Td>{m.dailyCap}</Td>
-                    <Td>
-                      <Badge tone={m.status === "active" ? "pos" : "neutral"}>{m.status}</Badge>
-                    </Td>
-                    <Td>
-                      <div className="flex items-center justify-end gap-2">
-                        <form action={updateMailboxAction} className="flex items-center gap-1.5">
-                          <input type="hidden" name="mailboxId" value={m.id} />
-                          <select name="status" defaultValue={m.status} className="input" style={{ padding: "5px 8px", width: "auto" }}>
-                            <option value="active">active</option>
-                            <option value="paused">paused</option>
-                          </select>
-                          <input
-                            name="dailyCap"
-                            type="number"
-                            min={1}
-                            defaultValue={m.dailyCap}
-                            className="input"
-                            style={{ padding: "5px 8px", width: "72px" }}
-                          />
-                          <input
-                            name="smtpPassword"
-                            type="password"
-                            placeholder="new app pw (optional)"
-                            className="input"
-                            style={{ padding: "5px 8px", width: "150px" }}
-                          />
-                          <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Save</button>
-                        </form>
-                        <form action={deleteMailboxAction}>
-                          <input type="hidden" name="mailboxId" value={m.id} />
-                          <button className="btn btn-ghost" style={{ padding: "5px 11px" }}>Remove</button>
-                        </form>
-                      </div>
-                    </Td>
-                  </Tr>
-                );
-              })
-            )}
-          </Table>
-
-          {/* Add mailbox */}
-          <div className="mt-4 rounded-[var(--radius-lg)] p-4" style={{ background: "var(--surface-2)" }}>
-            <SectionTitle hint="Use your Zapmail/Google Workspace mailbox + its app password.">Add mailbox</SectionTitle>
-            <form action={addMailboxAction} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Address">
-                <input name="address" type="email" required placeholder="sales@yourdomain.com" className="input" />
-              </Field>
-              <Field label="Display name">
-                <input name="displayName" placeholder="Sales Team" className="input" />
-              </Field>
-              <Field label="SMTP host">
-                <input name="smtpHost" placeholder="smtp.gmail.com" className="input" />
-              </Field>
-              <Field label="SMTP port">
-                <input name="smtpPort" defaultValue="587" className="input" />
-              </Field>
-              <Field label="SMTP user">
-                <input name="smtpUser" placeholder="sales@yourdomain.com" className="input" />
-              </Field>
-              <Field label="SMTP password">
-                <input name="smtpPassword" type="password" placeholder="app password" className="input" />
-              </Field>
-              <Field label="Daily cap">
-                <input name="dailyCap" type="number" min={1} defaultValue={50} className="input" />
-              </Field>
-              <div className="flex items-end">
-                <button className="btn btn-primary">Add mailbox</button>
-              </div>
-            </form>
-          </div>
-
-          {/* Import from Zapmail */}
-          <div className="mt-4 flex flex-wrap items-center gap-3">
-            <form action={importZapmailAction}>
-              <button className="btn btn-ghost">Import from Zapmail</button>
-            </form>
-            <span className="text-xs" style={{ color: "var(--muted)" }}>
-              {zapConfigured
-                ? "Pulls mailboxes from your Zapmail account (add each mailbox's app password to activate)."
-                : "Add your Zapmail API key in Settings below to enable import."}
-            </span>
-          </div>
-        </Card>
-
-        {/* 3. Send test */}
+        {/* Send test */}
         <Card>
           <SectionTitle>Send test</SectionTitle>
           <form action={sendTestEmailAction} className="flex flex-wrap items-end gap-3">
-            <div className="min-w-[260px] flex-1">
-              <Field label="To">
-                <input name="to" type="email" required placeholder="you@example.com" className="input" />
-              </Field>
-            </div>
+            <div className="min-w-[260px] flex-1"><Field label="To"><input name="to" type="email" required placeholder="you@example.com" className="input" /></Field></div>
             <button className="btn btn-primary">Send test</button>
           </form>
         </Card>
 
-        {/* 4. Settings */}
+        {/* Settings */}
         <Card>
           <SectionTitle>Settings</SectionTitle>
           <form action={saveEmailSettingsAction} className="flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field label="Zapmail API key">
-                <input name="zapmailApiKey" type="password" placeholder="•••• leave blank to keep" className="input" />
+            {isGod && (
+              <Field label="Zapmail API key" hint="The shared account key for the whole platform. Workspace auto-detects.">
+                <input name="zapmailApiKey" type="password" placeholder={zapConfigured ? "•••• saved — leave blank to keep" : "paste your Zapmail API key"} className="input" />
               </Field>
-              <Field label="Zapmail workspace key">
-                <input name="zapmailWorkspaceKey" defaultValue={settings.zapmailWorkspaceKey ?? ""} className="input" />
-              </Field>
-            </div>
+            )}
             <Field label="Booking URL" hint="Used in auto-replies & password emails">
               <input name="bookingUrl" defaultValue={settings.bookingUrl ?? ""} placeholder="https://calendly.com/you" className="input" />
             </Field>
             <label className="flex items-center gap-2 text-sm">
               <input name="autoReplyEnabled" type="checkbox" defaultChecked={settings.autoReplyEnabled} />
-              <span>Auto-reply to inbound replies</span>
+              <span>Auto-reply to inbound replies with the booking link</span>
             </label>
             <Field label="Auto-reply HTML" hint="Tokens: {{booking_link}} {{brand}}">
-              <textarea
-                className="input"
-                name="autoReplyHtml"
-                rows={6}
-                defaultValue={settings.autoReplyHtml ?? DEFAULT_AUTO_REPLY}
-              />
+              <textarea className="input" name="autoReplyHtml" rows={6} defaultValue={settings.autoReplyHtml ?? DEFAULT_AUTO_REPLY} />
             </Field>
-            <div>
-              <button className="btn btn-primary">Save settings</button>
-            </div>
+            <div><button className="btn btn-primary">Save settings</button></div>
           </form>
         </Card>
 
-        {/* 5. Outbound log */}
+        {/* Outbound log */}
         <Card>
-          <SectionTitle>Outbound log</SectionTitle>
-          <Table head={["To", "Subject", "Kind", "Status", "When"]}>
+          <SectionTitle hint={isGod ? "all white-labels" : undefined}>Outbound log</SectionTitle>
+          <Table head={isGod ? ["White-label", "To", "Subject", "Kind", "Status", "When"] : ["To", "Subject", "Kind", "Status", "When"]}>
             {outbound.length === 0 ? (
-              <Tr>
-                <Td><span style={{ color: "var(--muted)" }}>No sends yet.</span></Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-                <Td>{""}</Td>
-              </Tr>
+              <Tr><Td><span style={{ color: "var(--muted)" }}>No sends yet.</span></Td><Td>{""}</Td><Td>{""}</Td><Td>{""}</Td><Td>{""}</Td>{isGod && <Td>{""}</Td>}</Tr>
             ) : (
               outbound.map((o) => (
                 <Tr key={o.id}>
+                  {isGod && <Td><span className="chip">{wl(o.tenantId)}</span></Td>}
                   <Td>{o.toAddr}</Td>
                   <Td>{o.subject ?? "—"}</Td>
                   <Td><span className="chip">{o.kind}</span></Td>
@@ -344,22 +213,21 @@ export default async function EmailAdminPage() {
           </Table>
         </Card>
 
-        {/* 6. Inbound & auto-replies */}
+        {/* Inbound */}
         <Card>
-          <SectionTitle>Inbound & auto-replies</SectionTitle>
+          <SectionTitle hint={isGod ? "all white-labels" : undefined}>Inbound &amp; auto-replies</SectionTitle>
           {inbound.length === 0 ? (
             <p className="text-sm" style={{ color: "var(--muted)" }}>
-              Inbound replies appear here. Point your mailbox forwarding at POST {base}/api/email/inbound/{tenantId}.
+              Inbound replies appear here. Forward your mailbox replies to POST {base}/api/email/inbound/{tenantId}.
             </p>
           ) : (
-            <Table head={["From", "Subject", "Auto-replied", "When"]}>
+            <Table head={isGod ? ["White-label", "From", "Subject", "Auto-replied", "When"] : ["From", "Subject", "Auto-replied", "When"]}>
               {inbound.map((i) => (
                 <Tr key={i.id}>
+                  {isGod && <Td><span className="chip">{wl(i.tenantId)}</span></Td>}
                   <Td>{i.fromAddr}</Td>
                   <Td>{i.subject ?? "—"}</Td>
-                  <Td>
-                    <Badge tone={i.autoReplied ? "pos" : "neutral"}>{i.autoReplied ? "Yes" : "No"}</Badge>
-                  </Td>
+                  <Td><Badge tone={i.autoReplied ? "pos" : "neutral"}>{i.autoReplied ? "Yes" : "No"}</Badge></Td>
                   <Td>{fmt(i.receivedAt)}</Td>
                 </Tr>
               ))}
