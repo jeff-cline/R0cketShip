@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ImpersonationBanner } from "@/app/_components/ImpersonationBanner";
 import { AppNav, type AppNavItem } from "./AppNav";
 
 const CUSTOMER_NAV: AppNavItem[] = [
@@ -34,6 +35,7 @@ export function AppShell({
   const items = role === "agent" ? AGENT_NAV : CUSTOMER_NAV;
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-app)" }}>
+      <ImpersonationBanner />
       <AppNav brand={brand} items={items} balance={balance} />
       <main className="mx-auto w-full max-w-6xl px-6 py-8">{children}</main>
     </div>

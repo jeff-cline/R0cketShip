@@ -3,36 +3,61 @@ import { listUsers } from "@/src/auth/users";
 import { logoutAction } from "@/app/logout/actions";
 import { ImpersonationBanner } from "@/app/_components/ImpersonationBanner";
 import { createUserAction, resetUserAction, impersonateAction } from "@/app/admin/user-actions";
+import { PageHeader, Card, SectionTitle, Table, Tr, Td } from "@/app/_ui/primitives";
 
 export default async function ManagePage() {
   const ctx = await requireAuth(["manager"]);
   const team = await listUsers({ role: ctx.user.role, tenantId: ctx.user.tenantId });
+  const customers = team.filter((u) => u.role === "customer");
   return (
     <>
       <ImpersonationBanner />
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <h1 className="text-2xl font-bold">Manager — {ctx.tenant.domain}</h1>
-        <form action={createUserAction} className="mt-4 flex flex-wrap gap-2">
-          <input name="email" type="email" placeholder="customer@email" required className="rounded border p-2" />
-          <input name="tempPassword" placeholder="temp password" required className="rounded border p-2" />
-          <input type="hidden" name="role" value="customer" />
-          <button className="rounded bg-black px-3 py-2 text-white">Add customer</button>
-        </form>
-        <ul className="mt-4 space-y-2">
-          {team.filter((u) => u.role === "customer").map((u) => (
-            <li key={u.id} className="flex items-center gap-3">
-              <span>{u.email}</span>
-              <form action={impersonateAction}><input type="hidden" name="userId" value={u.id} /><button className="text-sm underline">Impersonate</button></form>
-              <form action={resetUserAction} className="flex gap-1">
-                <input type="hidden" name="userId" value={u.id} />
-                <input name="tempPassword" placeholder="new temp" className="rounded border p-1 text-sm" />
-                <button className="text-sm underline">Reset</button>
+      <div className="min-h-screen" style={{ background: "var(--bg-app)" }}>
+        <div className="mx-auto max-w-4xl px-6 py-10">
+          <PageHeader
+            title={`Manager — ${ctx.tenant.domain}`}
+            subtitle="Your team."
+            actions={
+              <form action={logoutAction}>
+                <button className="btn btn-ghost">Log out</button>
               </form>
-            </li>
-          ))}
-        </ul>
-        <form action={logoutAction} className="mt-6"><button className="rounded border px-3 py-1">Log out</button></form>
-      </main>
+            }
+          />
+
+          <Card pad className="mb-6">
+            <SectionTitle>Add customer</SectionTitle>
+            <form action={createUserAction} className="flex flex-wrap items-end gap-3">
+              <input name="email" type="email" placeholder="customer@email" required className="input flex-1" style={{ minWidth: "16rem" }} />
+              <input name="tempPassword" placeholder="temp password" required className="input" />
+              <input type="hidden" name="role" value="customer" />
+              <button className="btn btn-primary">Add customer</button>
+            </form>
+          </Card>
+
+          <Card pad={false}>
+            <Table head={["Customer", "Actions"]}>
+              {customers.map((u) => (
+                <Tr key={u.id}>
+                  <Td>{u.email}</Td>
+                  <Td>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <form action={impersonateAction}>
+                        <input type="hidden" name="userId" value={u.id} />
+                        <button className="btn btn-ghost">Impersonate</button>
+                      </form>
+                      <form action={resetUserAction} className="flex items-center gap-2">
+                        <input type="hidden" name="userId" value={u.id} />
+                        <input name="tempPassword" placeholder="new temp" className="input" />
+                        <button className="btn btn-ghost">Reset</button>
+                      </form>
+                    </div>
+                  </Td>
+                </Tr>
+              ))}
+            </Table>
+          </Card>
+        </div>
+      </div>
     </>
   );
 }
