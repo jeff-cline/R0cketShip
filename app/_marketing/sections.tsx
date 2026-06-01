@@ -99,7 +99,7 @@ export function EPartnerBand({ dark }: { dark?: boolean }) {
       <div className="mx-auto max-w-3xl">
         <h2 className="text-3xl font-extrabold">E-Partnership program</h2>
         <p className="mt-3 opacity-80">Exclusives and first right of refusal in your territory. We split 50/50 above and below the red line. Application only — for serious operators.</p>
-        <a href="/partner" className="mt-6 inline-block rounded-full px-6 py-3 font-bold" style={{ background: dark ? "var(--color-accent)" : "var(--color-primary)", color: dark ? "#0a0d12" : "var(--color-background)" }}>Apply now</a>
+        <a href="/e-partnership" className="mt-6 inline-block rounded-full px-6 py-3 font-bold" style={{ background: dark ? "var(--color-accent)" : "var(--color-primary)", color: dark ? "#0a0d12" : "var(--color-background)" }}>Apply now</a>
       </div>
     </section>
   );

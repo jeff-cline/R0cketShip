@@ -3,6 +3,7 @@ import { platformEconomics, tenantEconomics, salesTimeSeries } from "@/src/repor
 import { AreaChart, BarChart } from "@/app/_ui/charts";
 import { PageHeader, Card, SectionTitle, StatCard, Table, Tr, Td } from "@/app/_ui/primitives";
 import { platformCreditMetrics } from "@/src/reporting/credits";
+import { commissionExpense } from "@/src/referral/reports";
 import { db } from "@/src/db/client";
 import { users, leadDeliveries, leads } from "@/src/db/schema";
 import { sql } from "drizzle-orm";
@@ -18,6 +19,7 @@ export default async function AdminPage() {
     const { totals, byTenant } = await platformEconomics();
     const series = await salesTimeSeries(6);
     const credit = await platformCreditMetrics();
+    const commission = await commissionExpense();
     const usersCount = Number((await db.select({ c: sql<number>`count(*)` }).from(users))[0]?.c ?? 0);
     const leadsCount = Number((await db.select({ c: sql<number>`count(*)` }).from(leadDeliveries))[0]?.c ?? 0);
     // Current leads in each tenant's database (the ingested pool).
@@ -47,6 +49,9 @@ export default async function AdminPage() {
           <StatCard label="Outstanding credits" value={credit.outstandingCredits.toLocaleString()} sub="unspent (liability)" />
           <StatCard label="Free credits used" value={credit.freeCreditsUsed.toLocaleString()} sub={`of ${credit.freeCreditsIssued.toLocaleString()} issued`} />
         </div>
+        <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+          Partner &amp; rep commissions: <span style={{ color: "var(--warn)" }}>{usd(commission.owed)} owed</span> · {usd(commission.paid)} paid — paid from your margins, reduce gross profit.
+        </p>
 
         <Card className="mt-6">
           <SectionTitle hint="monthly $">Revenue — last 6 months</SectionTitle>
@@ -101,6 +106,7 @@ export default async function AdminPage() {
   const e = await tenantEconomics({ id: t.id, platformFeeRate: t.platformFeeRate, dataCostRate: t.dataCostRate });
   const series = await salesTimeSeries(6, t.id);
   const credit = await platformCreditMetrics(t.id);
+  const commission = await commissionExpense(t.id);
   const myLeads = Number((await db.select({ c: sql<number>`count(*)` }).from(leads).where(sql`${leads.tenantId} = ${t.id}`))[0]?.c ?? 0);
 
   return (
@@ -121,6 +127,9 @@ export default async function AdminPage() {
         <StatCard label="Platform & data fee" value={usd(e.platformRevenue)} sub={pct(e.feeRate) + " of sales · cost"} />
         <StatCard label="Your net" value={usd(e.whitelabelNet)} accent />
       </div>
+      <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+        Partner commissions: <span style={{ color: "var(--warn)" }}>{usd(commission.owed)} owed</span> · {usd(commission.paid)} paid — paid from your net.
+      </p>
 
       <Card className="mt-6">
         <SectionTitle hint="monthly $">Collections — last 6 months</SectionTitle>
