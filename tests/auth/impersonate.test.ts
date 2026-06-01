@@ -15,7 +15,7 @@ beforeEach(async () => {
 });
 
 describe("impersonation authority", () => {
-  it("god → any customer; manager → own-tenant customers only; never a manager/god; customer never", async () => {
+  it("god → any non-god (incl managers, to open-as a white-label); manager → own-tenant customers only; never god; customer never", async () => {
     const custA = await createUser({ role: "god", tenantId: tB }, { tenantId: tA, email: "ca@roofers.co", role: "customer", tempPassword: "x" });
     const custB = await createUser({ role: "god", tenantId: tB }, { tenantId: tB, email: "cb@solar.co", role: "customer", tempPassword: "x" });
     const mgrTarget = await createUser({ role: "god", tenantId: tB }, { tenantId: tA, email: "mt@roofers.co", role: "manager", tempPassword: "x" });
@@ -25,6 +25,8 @@ describe("impersonation authority", () => {
     expect(canImpersonate(mgrA, custB)).toBe(false);
     expect(canImpersonate(mgrA, mgrTarget)).toBe(false);
     expect(canImpersonate({ role: "god", tenantId: tB }, custA)).toBe(true);
+    // God can now open-as a white-label manager.
+    expect(canImpersonate({ role: "god", tenantId: tB }, mgrTarget)).toBe(true);
     expect(canImpersonate({ role: "customer", tenantId: tA }, custA)).toBe(false);
   });
 
