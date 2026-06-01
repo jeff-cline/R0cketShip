@@ -212,3 +212,38 @@ export const customerIntegrations = pgTable("customer_integrations", {
   lastStatus: text("last_status"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const tenantIntegrations = pgTable("tenant_integrations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id).unique(),
+  stripeSecretEnc: text("stripe_secret_enc"),
+  stripePublishable: text("stripe_publishable"),
+  paypalClientId: text("paypal_client_id"),
+  paypalSecretEnc: text("paypal_secret_enc"),
+  twilioAccountSid: text("twilio_account_sid"),
+  twilioAuthTokenEnc: text("twilio_auth_token_enc"),
+  twilioFromNumber: text("twilio_from_number"),
+  activePaymentProvider: paymentProvider("active_payment_provider").notNull().default("manual"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const epartnerApplications = pgTable("epartner_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  businessName: text("business_name"),
+  location: text("location"),
+  roofsLast12mo: text("roofs_last_12mo"),
+  seasonsInBusiness: text("seasons_in_business"),
+  territories: text("territories"),
+  teamW2: text("team_w2"),
+  team1099: text("team_1099"),
+  canvassers: text("canvassers"),
+  techUsed: text("tech_used"),
+  annualRevenue: text("annual_revenue"),
+  annualEbitda: text("annual_ebitda"),
+  approachedBefore: boolean("approached_before"),
+  agreeExit: boolean("agree_exit"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

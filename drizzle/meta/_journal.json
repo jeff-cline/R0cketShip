@@ -36,6 +36,13 @@
       "when": 1780269205210,
       "tag": "0004_even_zuras",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780272466031,
+      "tag": "0005_first_blacklash",
+      "breakpoints": true
     }
   ]
 }
