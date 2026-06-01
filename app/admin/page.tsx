@@ -2,10 +2,10 @@ import { requireAuth } from "@/src/auth/guard";
 import { platformEconomics, tenantEconomics, salesTimeSeries } from "@/src/reporting/economics";
 import { AreaChart, BarChart } from "@/app/_ui/charts";
 import { PageHeader, Card, SectionTitle, StatCard, Table, Tr, Td } from "@/app/_ui/primitives";
+import { platformCreditMetrics } from "@/src/reporting/credits";
 import { db } from "@/src/db/client";
 import { users, leadDeliveries, leads } from "@/src/db/schema";
 import { sql } from "drizzle-orm";
-import { openAsWhiteLabelAction } from "./user-actions";
 
 const usd = (n: number) => (n >= 1000 ? "$" + (n / 1000).toFixed(1) + "k" : "$" + n.toFixed(0));
 const pct = (n: number) => (n * 100).toFixed(0) + "%";
@@ -17,6 +17,7 @@ export default async function AdminPage() {
   if (isGod) {
     const { totals, byTenant } = await platformEconomics();
     const series = await salesTimeSeries(6);
+    const credit = await platformCreditMetrics();
     const usersCount = Number((await db.select({ c: sql<number>`count(*)` }).from(users))[0]?.c ?? 0);
     const leadsCount = Number((await db.select({ c: sql<number>`count(*)` }).from(leadDeliveries))[0]?.c ?? 0);
     // Current leads in each tenant's database (the ingested pool).
@@ -30,11 +31,21 @@ export default async function AdminPage() {
           subtitle="Revenue, gross profit, and white-label performance across r0cketship."
         />
 
+        <SectionTitle hint="real money only — excludes free signup credit">Revenue</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Platform revenue" value={usd(totals.platformRevenue)} accent />
           <StatCard label="Gross profit" value={usd(totals.grossProfit)} sub={pct(totals.grossMargin) + " margin"} />
-          <StatCard label="White-label sales" value={usd(totals.sales)} />
+          <StatCard label="White-label sales" value={usd(totals.sales)} sub="paid top-ups + subs" />
           <StatCard label="White-labels" value={String(byTenant.length)} sub={`${usersCount} users · ${leadsCount} leads delivered`} />
+        </div>
+
+        <SectionTitle hint="free signup credit vs paid">Credits &amp; users</SectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <StatCard label="Paid users" value={String(credit.paidUsers)} sub="made a real payment" />
+          <StatCard label="Free-mode users" value={String(credit.freeUsers)} sub="on signup credit only" />
+          <StatCard label="Paid revenue" value={usd(credit.paidRevenue)} sub="actual money in" accent />
+          <StatCard label="Outstanding credits" value={credit.outstandingCredits.toLocaleString()} sub="unspent (liability)" />
+          <StatCard label="Free credits used" value={credit.freeCreditsUsed.toLocaleString()} sub={`of ${credit.freeCreditsIssued.toLocaleString()} issued`} />
         </div>
 
         <Card className="mt-6">
@@ -72,10 +83,7 @@ export default async function AdminPage() {
                     <Td>
                       <div className="flex justify-end gap-2">
                         <a className="btn btn-ghost" href={`/admin/tenants/${t.tenantId}`} style={{ padding: "6px 10px" }}>Manage</a>
-                        <form action={openAsWhiteLabelAction}>
-                          <input type="hidden" name="tenantId" value={t.tenantId} />
-                          <button className="btn btn-primary" style={{ padding: "6px 10px" }}>Open as ↗</button>
-                        </form>
+                        <a className="btn btn-primary" href={`/admin/open-as/${t.tenantId}`} style={{ padding: "6px 10px" }}>Open as ↗</a>
                       </div>
                     </Td>
                   </Tr>

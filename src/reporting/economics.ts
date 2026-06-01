@@ -1,6 +1,6 @@
 import { and, eq, gte, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { tenants, leadDeliveries, payments } from "../db/schema";
+import { tenants, payments } from "../db/schema";
 
 /**
  * The r0cketship revenue model.
@@ -54,17 +54,19 @@ function num(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Gross dollar sales for one tenant: delivered-lead value + paid subscription invoices. */
+/**
+ * Real dollar sales for one tenant = actual money customers paid: paid top-ups +
+ * paid subscriptions. Lead purchases made with credits are NOT counted here —
+ * that money was recognized when the credits were bought (or it's free signup
+ * credit, which is a marketing cost, not revenue). See `platformCreditMetrics`
+ * for the free-vs-paid credit breakdown.
+ */
 export async function tenantSales(tenantId: string): Promise<number> {
-  const [leadRow] = await db
-    .select({ total: sql<string>`coalesce(sum(${leadDeliveries.priceCredits}), 0)` })
-    .from(leadDeliveries)
-    .where(eq(leadDeliveries.tenantId, tenantId));
-  const [subRow] = await db
+  const [payRow] = await db
     .select({ total: sql<string>`coalesce(sum(${payments.amountUsd}), 0)` })
     .from(payments)
-    .where(and(eq(payments.tenantId, tenantId), eq(payments.purpose, "subscription"), eq(payments.status, "paid")));
-  return num(leadRow?.total) + num(subRow?.total);
+    .where(and(eq(payments.tenantId, tenantId), eq(payments.status, "paid")));
+  return num(payRow?.total);
 }
 
 export interface TenantEconomicsRow extends Economics {
@@ -120,25 +122,18 @@ export async function salesTimeSeries(months = 6, tenantId?: string): Promise<{ 
   since.setDate(1);
   since.setHours(0, 0, 0, 0);
 
-  const leadWhere = tenantId ? and(gte(leadDeliveries.deliveredAt, since), eq(leadDeliveries.tenantId, tenantId)) : gte(leadDeliveries.deliveredAt, since);
-  const leadRows = await db
-    .select({ m: sql<string>`to_char(${leadDeliveries.deliveredAt}, 'YYYY-MM')`, total: sql<string>`coalesce(sum(${leadDeliveries.priceCredits}),0)` })
-    .from(leadDeliveries)
-    .where(leadWhere)
-    .groupBy(sql`to_char(${leadDeliveries.deliveredAt}, 'YYYY-MM')`);
-
-  const subWhere = tenantId
-    ? and(gte(payments.paidAt, since), eq(payments.tenantId, tenantId), eq(payments.purpose, "subscription"), eq(payments.status, "paid"))
-    : and(gte(payments.paidAt, since), eq(payments.purpose, "subscription"), eq(payments.status, "paid"));
-  const subRows = await db
+  // Real revenue = all paid payments (top-ups + subscriptions), not credit spend.
+  const payWhere = tenantId
+    ? and(gte(payments.paidAt, since), eq(payments.tenantId, tenantId), eq(payments.status, "paid"))
+    : and(gte(payments.paidAt, since), eq(payments.status, "paid"));
+  const payRows = await db
     .select({ m: sql<string>`to_char(${payments.paidAt}, 'YYYY-MM')`, total: sql<string>`coalesce(sum(${payments.amountUsd}),0)` })
     .from(payments)
-    .where(subWhere)
+    .where(payWhere)
     .groupBy(sql`to_char(${payments.paidAt}, 'YYYY-MM')`);
 
   const byMonth = new Map<string, number>();
-  for (const r of leadRows) byMonth.set(r.m, (byMonth.get(r.m) ?? 0) + num(r.total));
-  for (const r of subRows) byMonth.set(r.m, (byMonth.get(r.m) ?? 0) + num(r.total));
+  for (const r of payRows) byMonth.set(r.m, (byMonth.get(r.m) ?? 0) + num(r.total));
 
   const labels: string[] = [];
   const values: number[] = [];
