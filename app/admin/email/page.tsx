@@ -1,10 +1,10 @@
 import { asc, desc, eq } from "drizzle-orm";
 import { requireAuth } from "@/src/auth/guard";
 import { db } from "@/src/db/client";
-import { emailMailboxes, emailOutbound, emailInbound } from "@/src/db/schema";
+import { emailMailboxes, emailOutbound, emailInbound, tenants } from "@/src/db/schema";
 import { poolCapacity } from "@/src/email/mailbox";
 import { getOutboundSettings, DEFAULT_AUTO_REPLY } from "@/src/email/settings";
-import { zapmailConfigured } from "@/src/email/zapmail";
+import { zapmailConfigured, fetchZapmailMailboxes } from "@/src/email/zapmail";
 import {
   PageHeader,
   Card,
@@ -23,6 +23,7 @@ import {
   importZapmailAction,
   saveEmailSettingsAction,
   sendTestEmailAction,
+  assignZapmailAction,
 } from "./actions";
 
 function fmt(d: Date | string | null | undefined): string {
@@ -46,6 +47,7 @@ function statusTone(s: string): "pos" | "neg" | "warn" | "neutral" {
 
 export default async function EmailAdminPage() {
   const ctx = await requireAuth(["god", "manager"]);
+  const isGod = ctx.user.role === "god";
   const tenantId = ctx.user.tenantId;
   const today = new Date().toISOString().slice(0, 10);
   const base = `https://${ctx.tenant.domain}`;
@@ -58,6 +60,27 @@ export default async function EmailAdminPage() {
     db.select().from(emailInbound).where(eq(emailInbound.tenantId, tenantId)).orderBy(desc(emailInbound.receivedAt)).limit(25),
     zapmailConfigured(tenantId),
   ]);
+
+  // God-only: live Zapmail account mailboxes + which white-label each is assigned to.
+  let zapAccount: Awaited<ReturnType<typeof fetchZapmailMailboxes>> | null = null;
+  let allTenants: { id: string; domain: string }[] = [];
+  let assignedBy: Map<string, string[]> = new Map();
+  if (isGod && zapConfigured) {
+    const [za, ts, assigned] = await Promise.all([
+      fetchZapmailMailboxes(tenantId),
+      db.select({ id: tenants.id, domain: tenants.domain }).from(tenants).orderBy(asc(tenants.domain)),
+      db.select({ address: emailMailboxes.address, tenantId: emailMailboxes.tenantId }).from(emailMailboxes),
+    ]);
+    zapAccount = za;
+    allTenants = ts;
+    const domainById = new Map(ts.map((t) => [t.id, t.domain]));
+    assignedBy = new Map();
+    for (const a of assigned) {
+      const arr = assignedBy.get(a.address) ?? [];
+      arr.push(domainById.get(a.tenantId) ?? a.tenantId);
+      assignedBy.set(a.address, arr);
+    }
+  }
 
   return (
     <>
@@ -79,6 +102,60 @@ export default async function EmailAdminPage() {
             Each mailbox sends ~50/day; add more mailboxes to scale.
           </p>
         </Card>
+
+        {/* God: Zapmail account — assign mailboxes to white-labels */}
+        {isGod && (
+          <Card>
+            <SectionTitle hint={zapAccount?.error ? `Zapmail: ${zapAccount.error}` : `${zapAccount?.mailboxes.length ?? 0} mailboxes in your Zapmail account`}>
+              Zapmail account
+            </SectionTitle>
+            {!zapConfigured ? (
+              <p className="text-sm" style={{ color: "var(--muted)" }}>
+                Add your Zapmail API key in Settings below to manage and assign your account&apos;s mailboxes to white-labels.
+              </p>
+            ) : (zapAccount?.mailboxes.length ?? 0) === 0 ? (
+              <p className="text-sm" style={{ color: "var(--muted)" }}>
+                {zapAccount?.error ? `Couldn't reach Zapmail (${zapAccount.error}).` : "No mailboxes found in your Zapmail account yet."}
+              </p>
+            ) : (
+              <Table head={["Mailbox", "Domain", "Warm-up", "Assigned to", "Assign to white-label"]}>
+                {zapAccount!.mailboxes.map((m) => (
+                  <Tr key={m.email}>
+                    <Td>
+                      <div className="font-medium">{m.email}</div>
+                      {m.displayName && <div className="text-xs" style={{ color: "var(--muted)" }}>{m.displayName}</div>}
+                    </Td>
+                    <Td>{m.domain ?? "—"}</Td>
+                    <Td>
+                      <Badge tone={m.isWarmedUp ? "pos" : "warn"}>{m.isWarmedUp ? "warmed" : "warming"}</Badge>
+                    </Td>
+                    <Td>
+                      {(assignedBy.get(m.email) ?? []).length === 0 ? (
+                        <span className="text-xs" style={{ color: "var(--muted-2)" }}>—</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {(assignedBy.get(m.email) ?? []).map((d) => <span key={d} className="chip">{d}</span>)}
+                        </div>
+                      )}
+                    </Td>
+                    <Td>
+                      <form action={assignZapmailAction} className="flex items-center gap-1.5">
+                        <input type="hidden" name="email" value={m.email} />
+                        <select name="targetTenantId" className="input" style={{ padding: "5px 8px", width: "auto" }}>
+                          {allTenants.map((t) => <option key={t.id} value={t.id}>{t.domain}</option>)}
+                        </select>
+                        <button className="btn btn-primary" style={{ padding: "5px 11px" }}>Assign</button>
+                      </form>
+                    </Td>
+                  </Tr>
+                ))}
+              </Table>
+            )}
+            <p className="mt-3 text-xs" style={{ color: "var(--muted)" }}>
+              Assigning imports the mailbox (with its app password) into that white-label&apos;s sending pool — active immediately.
+            </p>
+          </Card>
+        )}
 
         {/* 2. Mailboxes */}
         <Card>
