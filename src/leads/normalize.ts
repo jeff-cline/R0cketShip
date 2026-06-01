@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import type { NormalizeResult } from "./types";
 
 const KNOWN = new Set([
@@ -26,15 +27,42 @@ function splitMulti(v: string | undefined): string[] {
   return out;
 }
 
-export function normalizeRow(raw: Record<string, string>): NormalizeResult {
+function digits(v: string | undefined): string {
+  return (v ?? "").replace(/\D/g, "");
+}
+
+/**
+ * Every lead needs a stable key. Prefer the provided hashed email
+ * (`sha256_lc_hem`); when a feed omits it (or columns are shifted), derive a
+ * deterministic fallback from email → phone → a row hash so no row is dropped.
+ * Returns null only for a completely empty row.
+ */
+function deriveKey(raw: Record<string, string>): string | null {
   const sha = (raw.sha256_lc_hem ?? "").trim();
-  if (!sha) return { ok: false, error: "missing sha256_lc_hem" };
+  if (sha) return sha;
+  const bizEmail = (raw.business_email ?? "").trim().toLowerCase();
+  if (bizEmail.includes("@")) return `alt:email:${bizEmail}`;
+  for (const e of [...splitMulti(raw.personal_emails), ...splitMulti(raw.additional_personal_emails)]) {
+    const lc = e.toLowerCase();
+    if (lc.includes("@")) return `alt:email:${lc}`;
+  }
+  const phone = digits(raw.mobile_phone) || digits(raw.personal_phone);
+  if (phone.length >= 10) return `alt:phone:${phone}`;
+  const hasData = Object.values(raw).some((v) => String(v ?? "").trim() !== "");
+  if (!hasData) return null;
+  return `alt:row:${createHash("sha256").update(JSON.stringify(raw)).digest("hex").slice(0, 40)}`;
+}
+
+export function normalizeRow(raw: Record<string, string>): NormalizeResult {
+  const sha = deriveKey(raw);
+  if (!sha) return { ok: false, error: "empty row" };
 
   const emailSet = new Set<string>();
   const emails: string[] = [];
   for (const e of [...splitMulti(raw.personal_emails), ...splitMulti(raw.additional_personal_emails)]) {
     const lc = e.toLowerCase();
-    if (!emailSet.has(lc)) { emailSet.add(lc); emails.push(lc); }
+    // keep only things that look like real emails (feeds sometimes column-shift)
+    if (lc.includes("@") && !emailSet.has(lc)) { emailSet.add(lc); emails.push(lc); }
   }
 
   const companyName = nn(raw.company_name);
