@@ -4,6 +4,21 @@ import { MarketingNav } from "./MarketingNav";
 import { MarketingFooter } from "./MarketingFooter";
 import { StatBar, FeatureGrid, HowItWorks, PricingBlock, Testimonials, EPartnerBand } from "./sections";
 
+function HeroImage({ src }: { src: string | null }) {
+  if (!src) return null;
+  return (
+    <div className="mx-auto mt-10 max-w-4xl px-2">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt=""
+        className="w-full rounded-2xl border object-cover"
+        style={{ borderColor: "rgba(0,0,0,.08)", boxShadow: "var(--shadow-lg)", maxHeight: 460 }}
+      />
+    </div>
+  );
+}
+
 export function BoldTemplate({ tenant }: { tenant: Tenant }) {
   const c = marketingContent(tenant);
   return (
@@ -18,6 +33,7 @@ export function BoldTemplate({ tenant }: { tenant: Tenant }) {
           <a href="/how-it-works" className="rounded-full border px-6 py-3.5 font-semibold" style={{ borderColor: "rgba(0,0,0,.15)" }}>See how it works</a>
         </div>
         <div className="mt-4 text-sm opacity-50">No card required · 3 free leads to test the system</div>
+        <HeroImage src={c.heroImage} />
       </header>
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} />
@@ -43,6 +59,7 @@ export function TrustTemplate({ tenant }: { tenant: Tenant }) {
           <a href="/signup" className="rounded-lg px-7 py-3.5 font-bold" style={{ background: "var(--color-accent)", color: "var(--color-primary)" }}>Get $50 in leads free</a>
           <a href="/how-it-works" className="rounded-lg border px-6 py-3.5 font-semibold" style={{ borderColor: "rgba(255,255,255,.25)", color: "#fff" }}>How it works</a>
         </div>
+        <HeroImage src={c.heroImage} />
       </header>
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} />
@@ -69,6 +86,7 @@ export function DarkTemplate({ tenant }: { tenant: Tenant }) {
           <a href="/how-it-works" className="rounded-lg border px-6 py-3.5 font-semibold" style={{ borderColor: "rgba(255,255,255,.2)", color: "#fff" }}>How it works</a>
         </div>
         <div className="mt-5 text-sm" style={{ color: "#6b7686" }}>★★★★★ trusted by operators nationwide</div>
+        <HeroImage src={c.heroImage} />
       </header>
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} dark />
