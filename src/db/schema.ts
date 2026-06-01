@@ -248,8 +248,69 @@ export const tenantIntegrations = pgTable("tenant_integrations", {
   smtpUser: text("smtp_user"),
   smtpPassEnc: text("smtp_pass_enc"),
   smtpFrom: text("smtp_from"),
+  // Outbound email (mailbox pool) settings.
+  zapmailApiKeyEnc: text("zapmail_api_key_enc"),
+  zapmailWorkspaceKey: text("zapmail_workspace_key"),
+  bookingUrl: text("booking_url"),
+  autoReplyEnabled: boolean("auto_reply_enabled").notNull().default(true),
+  autoReplyHtml: text("auto_reply_html"),
   activePaymentProvider: paymentProvider("active_payment_provider").notNull().default("manual"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// ---- Outbound email: mailbox pool + logs (Zapmail/Google mailboxes, ~50/day each) ----
+export const mailboxStatus = pgEnum("mailbox_status", ["active", "paused"]);
+
+export const emailMailboxes = pgTable("email_mailboxes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  address: text("address").notNull(),
+  displayName: text("display_name"),
+  provider: text("provider").notNull().default("smtp"), // smtp | zapmail-google | zapmail-microsoft
+  smtpHost: text("smtp_host"),
+  smtpPort: text("smtp_port"),
+  smtpUser: text("smtp_user"),
+  smtpPassEnc: text("smtp_pass_enc"),
+  dailyCap: integer("daily_cap").notNull().default(50),
+  sentToday: integer("sent_today").notNull().default(0),
+  sentDate: text("sent_date"), // YYYY-MM-DD; counter resets when the date rolls
+  status: mailboxStatus("status").notNull().default("active"),
+  zapmailId: text("zapmail_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailOutbound = pgTable("email_outbound", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  mailboxId: uuid("mailbox_id"),
+  toAddr: text("to_addr").notNull(),
+  subject: text("subject"),
+  kind: text("kind").notNull().default("manual"), // campaign | auto_reply | password_reset | manual
+  status: text("status").notNull(), // sent | failed | skipped
+  error: text("error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const emailInbound = pgTable("email_inbound", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  mailboxId: uuid("mailbox_id"),
+  fromAddr: text("from_addr").notNull(),
+  toAddr: text("to_addr"),
+  subject: text("subject"),
+  bodyText: text("body_text"),
+  autoReplied: boolean("auto_replied").notNull().default(false),
+  receivedAt: timestamp("received_at").notNull().defaultNow(),
+});
+
+export const passwordResets = pgTable("password_resets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  tenantId: uuid("tenant_id").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const epartnerApplications = pgTable("epartner_applications", {
