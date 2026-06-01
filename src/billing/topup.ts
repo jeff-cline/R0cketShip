@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client";
-import { payments, creditLedger, coupons, wallets } from "../db/schema";
+import { payments, creditLedger, coupons, wallets, zipSubscriptions } from "../db/schema";
 import { validateCoupon } from "./coupons";
 import { getProvider } from "./provider";
 
@@ -44,19 +44,24 @@ export async function confirmPayment(paymentId: string) {
     if (p.status !== "pending") return p;
 
     await tx.update(payments).set({ status: "paid", paidAt: new Date() }).where(eq(payments.id, paymentId));
+
+    if (p.purpose === "subscription") {
+      if (p.subscriptionId) {
+        const sub = (await tx.select().from(zipSubscriptions).where(eq(zipSubscriptions.id, p.subscriptionId)).limit(1))[0];
+        const from = sub?.paidThrough && sub.paidThrough.getTime() > Date.now() ? new Date(sub.paidThrough) : new Date();
+        from.setMonth(from.getMonth() + 1);
+        await tx.update(zipSubscriptions).set({ paidThrough: from }).where(eq(zipSubscriptions.id, p.subscriptionId));
+      }
+      return { ...p, status: "paid" as const };
+    }
+
     await tx.insert(creditLedger).values({
-      walletId: p.walletId,
-      tenantId: p.tenantId,
-      amount: p.credits,
-      type: "topup",
-      description: "Top-up",
-      refId: p.id,
+      walletId: p.walletId, tenantId: p.tenantId, amount: p.credits,
+      type: "topup", description: "Top-up", refId: p.id,
     });
     if (p.couponCode) {
       const c = (await tx.select().from(coupons).where(eq(coupons.code, p.couponCode)).limit(1))[0];
-      if (c) {
-        await tx.update(coupons).set({ timesRedeemed: sql`${coupons.timesRedeemed} + 1` }).where(eq(coupons.id, c.id));
-      }
+      if (c) await tx.update(coupons).set({ timesRedeemed: sql`${coupons.timesRedeemed} + 1` }).where(eq(coupons.id, c.id));
     }
     return { ...p, status: "paid" as const };
   });
