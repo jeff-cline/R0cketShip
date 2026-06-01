@@ -43,5 +43,9 @@ export async function getTenantByHost(host: string): Promise<Tenant | null> {
     heroVideo: row.heroVideo,
     heroHeadline: row.heroHeadline,
     heroSubhead: row.heroSubhead,
+    partnerProgramEnabled: row.partnerProgramEnabled,
+    partnerRate: row.partnerRate,
+    showBecomeAPartner: row.showBecomeAPartner,
+    customerFundingPolicy: row.customerFundingPolicy,
   };
 }

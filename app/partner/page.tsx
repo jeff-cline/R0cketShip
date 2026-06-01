@@ -1,102 +1,114 @@
-"use client";
-import { useActionState } from "react";
-import { applyAction } from "./actions";
-import { Card, Field, Badge } from "@/app/_ui/primitives";
+import { requireAuth } from "@/src/auth/guard";
+import { logoutAction } from "@/app/logout/actions";
+import { getOrCreatePartnerCode } from "@/src/referral/core";
+import { partnerFunnel, partnerEarnings } from "@/src/referral/reports";
+import { getPayoutSettings } from "@/src/referral/payouts";
+import { PageHeader, Card, SectionTitle, StatCard, Badge, Field } from "@/app/_ui/primitives";
+import { Rocket } from "@/app/_ui/Rocket";
+import { savePayoutAction } from "./actions";
 
-export default function PartnerPage() {
-  const [state, action, pending] = useActionState(applyAction, {});
-  if (state?.ok)
-    return (
-      <div className="min-h-screen" style={{ background: "var(--bg-app)" }}>
-        <div className="mx-auto max-w-2xl px-6 py-16">
-          <Card pad className="text-center">
-            <Badge tone="pos">Received</Badge>
-            <h1 className="mt-4 text-2xl font-extrabold">Application received</h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-              Thank you — we&rsquo;ll be in touch about your territory.
-            </p>
-          </Card>
-        </div>
-      </div>
-    );
+function money(n: number): string {
+  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export default async function PartnerDashboardPage() {
+  const ctx = await requireAuth(["partner"]);
+  const code = await getOrCreatePartnerCode(ctx.user.id, ctx.user.tenantId);
+  const [funnel, earnings, payout] = await Promise.all([
+    partnerFunnel(ctx.user.id),
+    partnerEarnings(ctx.user.id),
+    getPayoutSettings(ctx.user.id),
+  ]);
+
+  const link = `https://${ctx.tenant.domain}/signup?ref=${code.code}`;
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(link)}`;
+  const ratePct = Math.round(Number(ctx.tenant.partnerRate) * 100);
+  const brand = ctx.tenant.moneyWord || "Partner";
+
   return (
     <div className="min-h-screen" style={{ background: "var(--bg-app)" }}>
-      <div className="mx-auto max-w-2xl px-6 py-16">
-        <Card pad>
-          <div className="mb-6">
-            <div className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--color-accent)" }}>
-              Become an E-Partner
+      <header
+        className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 backdrop-blur"
+        style={{ background: "color-mix(in srgb, var(--bg-app) 80%, transparent)", borderBottom: "1px solid var(--line)" }}
+      >
+        <span className="flex items-center gap-2 text-sm font-extrabold capitalize">
+          <Rocket size={16} color="var(--color-accent)" /> {brand}
+        </span>
+        <form action={logoutAction}>
+          <button className="btn btn-ghost" style={{ padding: "7px 13px" }}>Log out</button>
+        </form>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-6 py-8">
+        <PageHeader title="Partner dashboard" subtitle="Refer customers, track your commission." />
+
+        {/* Your link */}
+        <Card className="mb-6">
+          <SectionTitle hint={`Code: ${code.code}`}>Your referral link</SectionTitle>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="min-w-0 flex-1">
+              <code
+                className="block w-full overflow-x-auto rounded-[var(--radius-lg)] px-4 py-3 text-sm"
+                style={{ background: "var(--surface-2)", border: "1px solid var(--line)", color: "var(--ink)" }}
+              >
+                {link}
+              </code>
+              <div className="mt-2 flex items-center gap-2">
+                <span className="chip">{code.code}</span>
+                <span className="text-xs" style={{ color: "var(--muted)" }}>Share this link or code to earn commission.</span>
+              </div>
             </div>
-            <h1 className="mt-2 text-2xl font-extrabold leading-tight">E-Partnership application</h1>
-            <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
-              Application only — 1+ years, $1M+ EBITDA, willing to exit in 3–5 years.
-            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qr} alt="Referral QR code" width={140} height={140} className="rounded-[var(--radius-lg)]" style={{ border: "1px solid var(--line)" }} />
           </div>
-          <form action={action} className="grid gap-4 sm:grid-cols-2">
+        </Card>
+
+        {/* Funnel */}
+        <SectionTitle>Funnel</SectionTitle>
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <StatCard label="Referred" value={String(funnel.referred)} sub="Signed up with your link" />
+          <StatCard label="Activated" value={String(funnel.activated)} sub="Used their free credit" />
+          <StatCard label="Upgraded" value={String(funnel.upgraded)} sub="Became paying customers" accent />
+        </div>
+
+        {/* Earnings */}
+        <SectionTitle>Earnings</SectionTitle>
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <StatCard label="Earned" value={money(earnings.earned)} sub="All-time" />
+          <StatCard label="Owed" value={money(earnings.owed)} sub="Unpaid" accent />
+          <StatCard label="Paid" value={money(earnings.paid)} sub="Disbursed to you" />
+        </div>
+
+        {/* Payout settings */}
+        <Card className="mb-6">
+          <SectionTitle>Payout settings</SectionTitle>
+          <form action={savePayoutAction} className="grid gap-4 sm:grid-cols-2">
+            <Field label="Payout method">
+              <select name="method" defaultValue={payout.method} className="input">
+                <option value="manual">Manual (check / wire)</option>
+                <option value="paypal">PayPal</option>
+                <option value="stripe_connect">Stripe Connect</option>
+              </select>
+            </Field>
+            <Field label="PayPal email" hint="Used when your method is PayPal.">
+              <input name="paypalEmail" type="email" placeholder="you@example.com" defaultValue={payout.paypalEmail ?? ""} className="input" />
+            </Field>
             <div className="sm:col-span-2">
-              <Field label="Your name *">
-                <input name="name" placeholder="Your name" required className="input" />
+              <Field label="Stripe Connect">
+                <input className="input" value={payout.stripeConnectId ?? "Connect coming soon"} readOnly disabled />
               </Field>
             </div>
-            <Field label="Phone">
-              <input name="phone" placeholder="Phone" className="input" />
-            </Field>
-            <Field label="Business name">
-              <input name="businessName" placeholder="Business name" className="input" />
-            </Field>
             <div className="sm:col-span-2">
-              <Field label="Location">
-                <input name="location" placeholder="Location" className="input" />
-              </Field>
-            </div>
-            <Field label="Roofs in last 12 months">
-              <input name="roofsLast12mo" placeholder="Roofs in last 12 months" className="input" />
-            </Field>
-            <Field label="Seasons in business">
-              <input name="seasonsInBusiness" placeholder="Seasons in business" className="input" />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="Territories / areas">
-                <input name="territories" placeholder="Territories / areas" className="input" />
-              </Field>
-            </div>
-            <Field label="# W-2">
-              <input name="teamW2" placeholder="# W-2" className="input" />
-            </Field>
-            <Field label="# 1099">
-              <input name="team1099" placeholder="# 1099" className="input" />
-            </Field>
-            <div className="sm:col-span-2">
-              <Field label="# canvassers / door knockers">
-                <input name="canvassers" placeholder="# canvassers / door knockers" className="input" />
-              </Field>
-            </div>
-            <div className="sm:col-span-2">
-              <Field label="Technology you use today">
-                <input name="techUsed" placeholder="Technology you use today" className="input" />
-              </Field>
-            </div>
-            <Field label="Annual revenue">
-              <input name="annualRevenue" placeholder="Annual revenue" className="input" />
-            </Field>
-            <Field label="Annual EBITDA">
-              <input name="annualEbitda" placeholder="Annual EBITDA" className="input" />
-            </Field>
-            <label className="flex items-center gap-2 text-sm sm:col-span-2" style={{ color: "var(--ink)" }}>
-              <input type="checkbox" name="approachedBefore" /> Approached to sell before
-            </label>
-            <label className="flex items-center gap-2 text-sm sm:col-span-2" style={{ color: "var(--ink)" }}>
-              <input type="checkbox" name="agreeExit" /> Agree to exit in 3–5 years if acquired
-            </label>
-            {state?.error && <p className="text-sm sm:col-span-2" style={{ color: "var(--neg)" }}>{state.error}</p>}
-            <div className="sm:col-span-2">
-              <button disabled={pending} className="btn btn-primary w-full">
-                {pending ? "Submitting…" : "Apply now"}
-              </button>
+              <button className="btn btn-primary">Save payout settings</button>
             </div>
           </form>
         </Card>
-      </div>
+
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          <Badge tone="accent">{ratePct}%</Badge>{" "}
+          You earn {ratePct}% of your white-label&rsquo;s margin on every collected payment for 12 months after a referral upgrades.
+        </p>
+      </main>
     </div>
   );
 }

@@ -5,24 +5,30 @@ import { ImpersonationBanner } from "@/app/_components/ImpersonationBanner";
 import { Sidebar, type NavItem } from "./_shell/Sidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const ctx = await requireAuth(["god", "manager"]);
+  const ctx = await requireAuth(["god", "manager", "sales_manager"]);
   const tenant = await getCurrentTenant();
   const isGod = ctx.user.role === "god";
+  const isSalesMgr = ctx.user.role === "sales_manager";
   const brand = isGod ? "R0cketShip" : (tenant?.moneyWord ? cap(tenant.moneyWord) : "Console");
 
-  const items: NavItem[] = [
-    { href: "/admin", label: "Dashboard" },
-    ...(isGod ? [{ href: "/admin/tenants", label: "White-labels" }] : []),
-    { href: "/admin/branding", label: "Site" },
-    { href: "/admin/users", label: "Users" },
-    { href: "/admin/billing", label: "Billing" },
-    ...(isGod ? [{ href: "/admin/data", label: "Data" }] : []),
-    { href: "/admin/leads", label: "Leads" },
-    { href: "/admin/integrations", label: "Integrations" },
-    { href: "/admin/email", label: "Email" },
-    ...(isGod ? [{ href: "/admin/partners", label: "E-Partners" }] : []),
-    ...(isGod ? [{ href: "/admin/insights", label: "Insights" }] : []),
-  ];
+  // Sales managers get a focused console (just the sales team).
+  const items: NavItem[] = isSalesMgr
+    ? [{ href: "/admin/sales", label: "Sales team" }]
+    : [
+        { href: "/admin", label: "Dashboard" },
+        ...(isGod ? [{ href: "/admin/tenants", label: "White-labels" }] : []),
+        { href: "/admin/branding", label: "Site" },
+        { href: "/admin/users", label: "Users" },
+        { href: "/admin/billing", label: "Billing" },
+        { href: "/admin/partner-program", label: "Partner program" },
+        ...(isGod ? [{ href: "/admin/sales", label: "Sales team" }] : []),
+        ...(isGod ? [{ href: "/admin/data", label: "Data" }] : []),
+        { href: "/admin/leads", label: "Leads" },
+        { href: "/admin/integrations", label: "Integrations" },
+        { href: "/admin/email", label: "Email" },
+        ...(isGod ? [{ href: "/admin/partners", label: "E-Partners" }] : []),
+        ...(isGod ? [{ href: "/admin/insights", label: "Insights" }] : []),
+      ];
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--bg-app)" }}>

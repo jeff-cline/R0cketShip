@@ -5,7 +5,7 @@ import { hashPassword } from "./password";
 import { tenantFilter } from "../tenant/scope";
 import { ensureWalletWithBonus } from "../billing/wallet";
 
-type Role = "god" | "manager" | "customer" | "agent";
+type Role = "god" | "manager" | "customer" | "agent" | "partner" | "sales_manager";
 export interface Actor {
   role: Role;
   tenantId: string;

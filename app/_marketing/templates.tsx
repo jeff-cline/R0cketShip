@@ -17,7 +17,7 @@ export function BoldTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} />
       <Testimonials testimonials={c.testimonials} />
       <EPartnerBand />
-      <MarketingFooter footerHtml={c.footerHtml} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
     </main>
   );
 }
@@ -34,7 +34,7 @@ export function TrustTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} />
       <Testimonials testimonials={c.testimonials} />
       <EPartnerBand />
-      <MarketingFooter footerHtml={c.footerHtml} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
     </main>
   );
 }
@@ -51,7 +51,7 @@ export function DarkTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} dark />
       <Testimonials testimonials={c.testimonials} dark />
       <EPartnerBand dark />
-      <MarketingFooter footerHtml={c.footerHtml} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
     </main>
   );
 }

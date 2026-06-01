@@ -1,22 +1,14 @@
 "use server";
-import { getCurrentTenant } from "@/src/tenant/context";
-import { submitApplication } from "@/src/marketing/partner";
+import { revalidatePath } from "next/cache";
+import { requireAuth } from "@/src/auth/guard";
+import { setPayoutSettings, type PayoutMethod } from "@/src/referral/payouts";
 
-export async function applyAction(_prev: unknown, formData: FormData): Promise<{ error?: string; ok?: boolean }> {
-  const tenant = await getCurrentTenant();
-  if (!tenant) return { error: "Unknown site." };
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return { error: "Name is required." };
-  const s = (k: string) => String(formData.get(k) ?? "").trim() || null;
-  await submitApplication(tenant.id, {
-    name,
-    phone: s("phone"), businessName: s("businessName"), location: s("location"),
-    roofsLast12mo: s("roofsLast12mo"), seasonsInBusiness: s("seasonsInBusiness"),
-    territories: s("territories"), teamW2: s("teamW2"), team1099: s("team1099"),
-    canvassers: s("canvassers"), techUsed: s("techUsed"), annualRevenue: s("annualRevenue"),
-    annualEbitda: s("annualEbitda"),
-    approachedBefore: formData.get("approachedBefore") != null,
-    agreeExit: formData.get("agreeExit") != null,
-  });
-  return { ok: true };
+/** Partner dashboard: save the partner's payout settings. */
+export async function savePayoutAction(formData: FormData): Promise<void> {
+  const ctx = await requireAuth(["partner"]);
+  const raw = String(formData.get("method") ?? "manual");
+  const method: PayoutMethod = raw === "paypal" || raw === "stripe_connect" ? raw : "manual";
+  const paypalEmail = String(formData.get("paypalEmail") ?? "").trim() || null;
+  await setPayoutSettings(ctx.user.id, { method, paypalEmail, stripeConnectId: undefined });
+  revalidatePath("/partner");
 }

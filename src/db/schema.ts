@@ -47,10 +47,15 @@ export const tenants = pgTable("tenants", {
   heroVideo: text("hero_video"),
   heroHeadline: text("hero_headline"),
   heroSubhead: text("hero_subhead"),
+  // Partner program (per white-label).
+  partnerProgramEnabled: boolean("partner_program_enabled").notNull().default(false),
+  partnerRate: numeric("partner_rate").notNull().default("0.20"),
+  showBecomeAPartner: boolean("show_become_a_partner").notNull().default(false),
+  customerFundingPolicy: text("customer_funding_policy").notNull().default("self"), // self | owner
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const userRole = pgEnum("user_role", ["god", "manager", "customer", "agent"]);
+export const userRole = pgEnum("user_role", ["god", "manager", "customer", "agent", "partner", "sales_manager"]);
 export const userStatus = pgEnum("user_status", ["active", "disabled"]);
 
 export const users = pgTable(
@@ -312,6 +317,82 @@ export const emailInbound = pgTable("email_inbound", {
   bodyText: text("body_text"),
   autoReplied: boolean("auto_replied").notNull().default(false),
   receivedAt: timestamp("received_at").notNull().defaultNow(),
+});
+
+// ---- Partner / franchise referral program ----
+export const referralScope = pgEnum("referral_scope", ["platform", "tenant"]);
+export const payoutForm = pgEnum("payout_form", ["cash", "credit"]);
+export const commissionStatus = pgEnum("commission_status", ["accrued", "owed", "paid", "void"]);
+
+export const referralCodes = pgTable("referral_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(),
+  ownerUserId: uuid("owner_user_id").notNull().references(() => users.id),
+  scope: referralScope("scope").notNull(),
+  tenantId: uuid("tenant_id"), // null for platform-scope (sales reps)
+  customerRate: numeric("customer_rate").notNull().default("0.20"),
+  whitelabelRate: numeric("whitelabel_rate"), // platform scope only — landing new white-labels
+  payoutFormChoice: payoutForm("payout_form").notNull().default("cash"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const partnerReferrals = pgTable("partner_referrals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  referredUserId: uuid("referred_user_id").notNull().references(() => users.id).unique(),
+  referralCodeId: uuid("referral_code_id").notNull().references(() => referralCodes.id),
+  scope: referralScope("scope").notNull(),
+  tenantId: uuid("tenant_id"),
+  activatedAt: timestamp("activated_at"), // first free-credit spend
+  upgradedAt: timestamp("upgraded_at"), // first real payment
+  windowEndsAt: timestamp("window_ends_at"), // upgradedAt + 12 months
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const commissionLedger = pgTable("commission_ledger", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  referralCodeId: uuid("referral_code_id").notNull(),
+  ownerUserId: uuid("owner_user_id").notNull(),
+  referredUserId: uuid("referred_user_id"),
+  paymentId: uuid("payment_id"),
+  kind: text("kind").notNull().default("customer"), // customer | whitelabel
+  basisAmount: numeric("basis_amount").notNull(),
+  rate: numeric("rate").notNull(),
+  amount: numeric("amount").notNull(),
+  scope: referralScope("scope").notNull(),
+  tenantId: uuid("tenant_id"),
+  periodMonth: text("period_month").notNull(), // YYYY-MM
+  status: commissionStatus("status").notNull().default("accrued"),
+  payoutBatchId: uuid("payout_batch_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const payoutSettings = pgTable("payout_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id).unique(),
+  method: text("method").notNull().default("manual"), // paypal | stripe_connect | manual
+  paypalEmail: text("paypal_email"),
+  stripeConnectId: text("stripe_connect_id"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const payoutBatches = pgTable("payout_batches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  runMonth: text("run_month").notNull(), // YYYY-MM being paid out
+  scope: referralScope("scope"),
+  createdBy: uuid("created_by"),
+  status: text("status").notNull().default("queued"), // queued | sent | failed
+  totalAmount: numeric("total_amount").notNull().default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const platformSettings = pgTable("platform_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  salesRepRate: numeric("sales_rep_rate").notNull().default("0.20"),
+  defaultPartnerRate: numeric("default_partner_rate").notNull().default("0.20"),
+  partnerRateCap: numeric("partner_rate_cap").notNull().default("0.30"),
+  whitelabelLandedRate: numeric("whitelabel_landed_rate").notNull().default("0.10"),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const passwordResets = pgTable("password_resets", {

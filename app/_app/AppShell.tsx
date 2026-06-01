@@ -7,7 +7,6 @@ const CUSTOMER_NAV: AppNavItem[] = [
   { href: "/crm", label: "CRM" },
   { href: "/subscriptions", label: "Subscriptions" },
   { href: "/billing", label: "Billing" },
-  { href: "/affiliate", label: "Affiliate" },
   { href: "/settings/integrations", label: "Settings" },
 ];
 

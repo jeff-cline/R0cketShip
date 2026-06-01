@@ -2,11 +2,13 @@ import { findUserByEmail } from "./users";
 import { verifyPassword } from "./password";
 import { createSession } from "./session";
 
-type Role = "god" | "manager" | "customer" | "agent";
+type Role = "god" | "manager" | "customer" | "agent" | "partner" | "sales_manager";
 
 export function roleHome(role: Role): string {
   if (role === "god") return "/admin";
   if (role === "manager") return "/admin"; // owner console (tenant-scoped)
+  if (role === "sales_manager") return "/admin/sales"; // sales console
+  if (role === "partner") return "/partner";
   if (role === "agent") return "/agent";
   return "/dashboard";
 }

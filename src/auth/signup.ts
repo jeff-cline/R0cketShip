@@ -23,8 +23,8 @@ export async function signupCustomer(
     .returning();
   await ensureWalletWithBonus(row.id);
   if (input.refCode) {
-    const { recordReferral } = await import("../affiliate/referral");
-    await recordReferral(row.id, input.refCode);
+    const { attributeSignup } = await import("../referral/core");
+    await attributeSignup(row.id, input.refCode);
   }
   return row;
 }

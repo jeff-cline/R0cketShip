@@ -3,7 +3,7 @@ import { db } from "../db/client";
 import { payments, creditLedger, coupons, wallets, zipSubscriptions } from "../db/schema";
 import { validateCoupon } from "./coupons";
 import { resolveTopupProvider, type TopupStart } from "./provider-resolve";
-import { creditAffiliateCommission } from "../affiliate/commission";
+import { accrueCommissionForPayment } from "../referral/commission";
 
 export async function createTopup(
   walletId: string,
@@ -36,12 +36,12 @@ export async function createTopup(
 
 /** Idempotent: flips pending -> paid, writes the topup ledger entry, bumps coupon redemptions once. */
 export async function confirmPayment(paymentId: string) {
-  return db.transaction(async (tx) => {
+  const { payment, newlyPaid } = await db.transaction(async (tx) => {
     const p = (
       await tx.select().from(payments).where(eq(payments.id, paymentId)).limit(1).for("update")
     )[0];
     if (!p) throw new Error("payment not found");
-    if (p.status !== "pending") return p;
+    if (p.status !== "pending") return { payment: p, newlyPaid: false };
 
     await tx.update(payments).set({ status: "paid", paidAt: new Date() }).where(eq(payments.id, paymentId));
 
@@ -52,7 +52,7 @@ export async function confirmPayment(paymentId: string) {
         from.setMonth(from.getMonth() + 1);
         await tx.update(zipSubscriptions).set({ paidThrough: from }).where(eq(zipSubscriptions.id, p.subscriptionId));
       }
-      return { ...p, status: "paid" as const };
+      return { payment: { ...p, status: "paid" as const }, newlyPaid: true };
     }
 
     await tx.insert(creditLedger).values({
@@ -63,9 +63,14 @@ export async function confirmPayment(paymentId: string) {
       const c = (await tx.select().from(coupons).where(eq(coupons.code, p.couponCode)).limit(1))[0];
       if (c) await tx.update(coupons).set({ timesRedeemed: sql`${coupons.timesRedeemed} + 1` }).where(eq(coupons.id, c.id));
     }
-    await creditAffiliateCommission(tx, p);
-    return { ...p, status: "paid" as const };
+    return { payment: { ...p, status: "paid" as const }, newlyPaid: true };
   });
+
+  // Partner/sales commission on collected money (top-ups + subscriptions), outside the tx.
+  if (newlyPaid) {
+    await accrueCommissionForPayment({ id: payment.id, tenantId: payment.tenantId, walletId: payment.walletId, amountUsd: payment.amountUsd, paidAt: payment.paidAt ?? new Date() });
+  }
+  return payment;
 }
 
 export async function listPendingPayments(tenantId?: string) {

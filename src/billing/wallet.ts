@@ -41,7 +41,7 @@ export async function grantCredits(walletId: string, amount: number, description
   });
 }
 
-type Role = "god" | "manager" | "customer" | "agent";
+type Role = "god" | "manager" | "customer" | "agent" | "partner" | "sales_manager";
 
 /** Authorized grant: god → any wallet; manager → only own-tenant wallet; customer → never. */
 export async function grantCreditsAs(
