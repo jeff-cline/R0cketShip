@@ -135,6 +135,7 @@ export const ledgerType = pgEnum("ledger_type", [
 export const paymentProvider = pgEnum("payment_provider", ["manual", "stripe", "paypal"]);
 export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
 export const couponKind = pgEnum("coupon_kind", ["percent", "fixed_credits"]);
+export const paymentPurpose = pgEnum("payment_purpose", ["topup", "subscription"]);
 
 export const wallets = pgTable("wallets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -164,6 +165,8 @@ export const payments = pgTable("payments", {
   credits: numeric("credits").notNull(),
   couponCode: text("coupon_code"),
   status: paymentStatus("status").notNull().default("pending"),
+  purpose: paymentPurpose("purpose").notNull().default("topup"),
+  subscriptionId: uuid("subscription_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   paidAt: timestamp("paid_at"),
 });
@@ -246,4 +249,20 @@ export const epartnerApplications = pgTable("epartner_applications", {
   approachedBefore: boolean("approached_before"),
   agreeExit: boolean("agree_exit"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const subscriptionStatus = pgEnum("subscription_status", ["active", "canceled"]);
+export const subscriptionOffer = pgEnum("subscription_offer", ["data", "booking", "epartner"]);
+
+export const zipSubscriptions = pgTable("zip_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull(),
+  customerId: uuid("customer_id").notNull().references(() => users.id),
+  zip: text("zip").notNull(),
+  offer: subscriptionOffer("offer").notNull().default("data"),
+  monthlyPrice: numeric("monthly_price").notNull(),
+  status: subscriptionStatus("status").notNull().default("active"),
+  paidThrough: timestamp("paid_through"),
+  startedAt: timestamp("started_at").notNull().defaultNow(),
+  canceledAt: timestamp("canceled_at"),
 });
