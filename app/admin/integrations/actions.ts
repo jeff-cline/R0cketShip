@@ -16,6 +16,7 @@ export async function saveIntegrationsAction(formData: FormData) {
   const provider = String(formData.get("activePaymentProvider") ?? "manual") as Provider;
   await setIntegrations(tenantId, {
     stripeSecret: secret("stripeSecret"),
+    stripeWebhookSecret: secret("stripeWebhookSecret"),
     stripePublishable: plain("stripePublishable"),
     paypalClientId: plain("paypalClientId"),
     paypalSecret: secret("paypalSecret"),

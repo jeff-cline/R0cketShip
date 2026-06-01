@@ -1,0 +1,1 @@
+ALTER TABLE "tenant_integrations" ADD COLUMN "stripe_webhook_secret_enc" text;

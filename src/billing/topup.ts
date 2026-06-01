@@ -2,10 +2,15 @@ import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client";
 import { payments, creditLedger, coupons, wallets, zipSubscriptions } from "../db/schema";
 import { validateCoupon } from "./coupons";
-import { getProvider } from "./provider";
+import { resolveTopupProvider, type TopupStart } from "./provider-resolve";
 import { creditAffiliateCommission } from "../affiliate/commission";
 
-export async function createTopup(walletId: string, amountUsd: number, couponCode?: string) {
+export async function createTopup(
+  walletId: string,
+  amountUsd: number,
+  couponCode?: string,
+  urls?: { success: string; cancel: string },
+) {
   const wallet = (await db.select().from(wallets).where(eq(wallets.id, walletId)).limit(1))[0];
   if (!wallet) throw new Error("wallet not found");
 
@@ -18,20 +23,14 @@ export async function createTopup(walletId: string, amountUsd: number, couponCod
     appliedCoupon = couponCode;
   }
 
-  const [payment] = await db
-    .insert(payments)
-    .values({
-      tenantId: wallet.tenantId,
-      walletId,
-      provider: "manual",
-      amountUsd: String(amountUsd),
-      credits: String(credits),
-      couponCode: appliedCoupon,
-      status: "pending",
-    })
-    .returning();
+  const provider = await resolveTopupProvider(wallet.tenantId);
+  const [payment] = await db.insert(payments).values({
+    tenantId: wallet.tenantId, walletId, provider: provider.name,
+    amountUsd: String(amountUsd), credits: String(credits), couponCode: appliedCoupon, status: "pending",
+  }).returning();
 
-  const start = await getProvider("manual").startTopup({ id: payment.id, amountUsd });
+  const start: TopupStart = await provider.start({ id: payment.id, amountUsd }, urls ?? { success: "", cancel: "" });
+  if (start.ref) await db.update(payments).set({ providerRef: start.ref }).where(eq(payments.id, payment.id));
   return { payment, start };
 }
 
