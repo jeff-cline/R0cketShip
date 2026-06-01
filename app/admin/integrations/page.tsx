@@ -26,6 +26,7 @@ export default async function IntegrationsAdminPage() {
               <label className="col-span-2 font-medium">Stripe</label>
               <input name="stripePublishable" defaultValue={i.stripePublishable ?? ""} placeholder="pk_..." className="rounded border p-2" />
               <input name="stripeSecret" type="password" placeholder={i.stripeSecret ? maskSecret(i.stripeSecret) : "sk_... (secret)"} className="rounded border p-2" />
+              <input name="stripeWebhookSecret" type="password" placeholder={i.stripeWebhookSecret ? maskSecret(i.stripeWebhookSecret) : "whsec_... (webhook signing secret)"} className="col-span-2 rounded border p-2" />
               <label className="col-span-2 mt-2 font-medium">PayPal</label>
               <input name="paypalClientId" defaultValue={i.paypalClientId ?? ""} placeholder="client id" className="rounded border p-2" />
               <input name="paypalSecret" type="password" placeholder={i.paypalSecret ? maskSecret(i.paypalSecret) : "secret"} className="rounded border p-2" />

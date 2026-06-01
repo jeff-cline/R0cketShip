@@ -226,6 +226,7 @@ export const tenantIntegrations = pgTable("tenant_integrations", {
   twilioAccountSid: text("twilio_account_sid"),
   twilioAuthTokenEnc: text("twilio_auth_token_enc"),
   twilioFromNumber: text("twilio_from_number"),
+  stripeWebhookSecretEnc: text("stripe_webhook_secret_enc"),
   activePaymentProvider: paymentProvider("active_payment_provider").notNull().default("manual"),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

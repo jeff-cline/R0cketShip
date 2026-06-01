@@ -16,12 +16,14 @@ describe("integrations store", () => {
     const v = await getIntegrations(tA);
     expect(v.activePaymentProvider).toBe("manual");
     expect(v.stripeSecret).toBeNull();
+    expect(v.stripeWebhookSecret).toBeNull();
   });
   it("set then get returns plaintext; DB holds ciphertext", async () => {
-    await setIntegrations(tA, { stripeSecret: "sk_test_123", stripePublishable: "pk_test_1", activePaymentProvider: "stripe" });
+    await setIntegrations(tA, { stripeSecret: "sk_test_123", stripePublishable: "pk_test_1", stripeWebhookSecret: "whsec_x", activePaymentProvider: "stripe" });
     const v = await getIntegrations(tA);
     expect(v.stripeSecret).toBe("sk_test_123");
     expect(v.stripePublishable).toBe("pk_test_1");
+    expect(v.stripeWebhookSecret).toBe("whsec_x");
     expect(v.activePaymentProvider).toBe("stripe");
     const raw = (await db.select().from(tenantIntegrations).where(eq(tenantIntegrations.tenantId, tA)))[0];
     expect(raw.stripeSecretEnc).not.toBe("sk_test_123");

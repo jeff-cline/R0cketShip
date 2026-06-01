@@ -64,6 +64,13 @@
       "when": 1748649600000,
       "tag": "0008_affiliate_ledger_type",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780277003354,
+      "tag": "0009_nice_vanisher",
+      "breakpoints": true
     }
   ]
 }
