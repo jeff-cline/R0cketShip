@@ -96,32 +96,44 @@ export default async function AdminPage() {
     );
   }
 
-  // Manager: white-label business-manager P&L. The 60% is shown as a COST.
+  // Manager: white-label business-owner console, scoped to their tenant.
   const t = ctx.tenant;
   const e = await tenantEconomics({ id: t.id, platformFeeRate: t.platformFeeRate, dataCostRate: t.dataCostRate });
   const series = await salesTimeSeries(6, t.id);
+  const credit = await platformCreditMetrics(t.id);
+  const myLeads = Number((await db.select({ c: sql<number>`count(*)` }).from(leads).where(sql`${leads.tenantId} = ${t.id}`))[0]?.c ?? 0);
 
   return (
     <>
-      <PageHeader title="Business overview" subtitle={`Your lead sales and margin on ${t.domain}.`} />
+      <PageHeader title="Business overview" subtitle={`Your members, collections, leads and margin on ${t.domain}.`} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard label="Gross sales" value={usd(e.sales)} />
+      <SectionTitle>Your business</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <a href="/admin/users"><StatCard label="Members" value={String(credit.totalCustomers)} sub={`${credit.paidUsers} paid · ${credit.freeUsers} free`} /></a>
+        <StatCard label="Collected" value={usd(credit.paidRevenue)} sub="real money in" accent />
+        <StatCard label="Outstanding credits" value={credit.outstandingCredits.toLocaleString()} sub="unspent by members" />
+        <a href="/admin/leads"><StatCard label="Leads in your database" value={myLeads.toLocaleString()} sub="searchable" /></a>
+      </div>
+
+      <SectionTitle>Your margin</SectionTitle>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Gross sales" value={usd(e.sales)} sub="paid by members" />
         <StatCard label="Platform & data fee" value={usd(e.platformRevenue)} sub={pct(e.feeRate) + " of sales · cost"} />
         <StatCard label="Your net" value={usd(e.whitelabelNet)} accent />
       </div>
 
       <Card className="mt-6">
-        <SectionTitle hint="monthly $">Sales — last 6 months</SectionTitle>
+        <SectionTitle hint="monthly $">Collections — last 6 months</SectionTitle>
         <AreaChart data={series.values} labels={series.labels} />
       </Card>
 
       <Card className="mt-6">
         <SectionTitle>How your pricing works</SectionTitle>
         <p className="text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-          You sell leads/subscriptions to your customers. r0cketship&apos;s platform &amp; data fee is{" "}
+          Your members pay for leads/subscriptions. r0cketship&apos;s platform &amp; data fee is{" "}
           {pct(e.feeRate)} of every sale ({usd(e.platformRevenue)} so far). You keep the rest —{" "}
           <span className="font-semibold" style={{ color: "var(--ink)" }}>{usd(e.whitelabelNet)}</span>.
+          The $50 signup credit is a free hook — it isn&apos;t revenue.
         </p>
       </Card>
     </>

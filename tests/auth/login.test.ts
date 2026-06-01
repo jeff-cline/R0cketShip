@@ -36,7 +36,7 @@ describe("loginUser", () => {
 
   it("roleHome maps roles to landing routes", () => {
     expect(roleHome("god")).toBe("/admin");
-    expect(roleHome("manager")).toBe("/manage");
+    expect(roleHome("manager")).toBe("/admin");
     expect(roleHome("customer")).toBe("/dashboard");
   });
 });

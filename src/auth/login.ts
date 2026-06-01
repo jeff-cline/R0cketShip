@@ -6,7 +6,7 @@ type Role = "god" | "manager" | "customer" | "agent";
 
 export function roleHome(role: Role): string {
   if (role === "god") return "/admin";
-  if (role === "manager") return "/manage";
+  if (role === "manager") return "/admin"; // owner console (tenant-scoped)
   if (role === "agent") return "/agent";
   return "/dashboard";
 }
