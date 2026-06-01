@@ -54,7 +54,7 @@ export function Hero({ content, variant = "bold" }: { content: MarketingContent;
             ⚡ Predictive intent · live in your ZIP
           </div>
           <h1
-            className={`mx-auto mt-5 max-w-2xl text-4xl font-extrabold leading-[1.05] text-white sm:text-5xl md:text-6xl ${variant === "trust" ? "font-serif-display" : ""}`}
+            className={`hero-h1 mx-auto mt-5 max-w-2xl text-4xl font-extrabold leading-[1.05] sm:text-5xl md:text-6xl ${variant === "trust" ? "font-serif-display" : ""}`}
           >
             {content.headline}
           </h1>

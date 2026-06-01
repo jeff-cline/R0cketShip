@@ -113,3 +113,15 @@ h1, h2, h3, h4 { font-family: var(--font-display), system-ui, sans-serif; letter
   background: var(--surface-3); color: var(--ink-2);
 }
 .label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .01em; }
+
+/* Hero headline: bursting accent (orange) glow + thin white edge for dark backgrounds. */
+.hero-h1 {
+  color: #fff;
+  -webkit-text-stroke: 0.6px rgba(255,255,255,.55);
+  text-shadow:
+    0 0 2px rgba(255,255,255,.65),
+    0 0 14px color-mix(in srgb, var(--color-accent) 88%, transparent),
+    0 0 30px color-mix(in srgb, var(--color-accent) 62%, transparent),
+    0 0 56px color-mix(in srgb, var(--color-accent) 40%, transparent),
+    0 3px 14px rgba(0,0,0,.4);
+}
