@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { partnerReferrals, referralCodes, tenants, commissionLedger, wallets } from "../db/schema";
 
@@ -55,8 +55,8 @@ export async function accrueCommissionForPayment(payment: {
   }
   if (windowEndsAt && now > windowEndsAt) return { accrued: false };
 
-  // One commission row per payment.
-  const dup = (await db.select({ id: commissionLedger.id }).from(commissionLedger).where(eq(commissionLedger.paymentId, payment.id)).limit(1))[0];
+  // One customer-referral commission row per payment.
+  const dup = (await db.select({ id: commissionLedger.id }).from(commissionLedger).where(and(eq(commissionLedger.paymentId, payment.id), eq(commissionLedger.kind, "customer"))).limit(1))[0];
   if (dup) return { accrued: false };
 
   const amount = num(payment.amountUsd);
@@ -76,6 +76,56 @@ export async function accrueCommissionForPayment(payment: {
     rate: String(clamp01(num(rc.customerRate))),
     amount: String(commission),
     scope: rc.scope,
+    tenantId: payment.tenantId,
+    periodMonth: now.toISOString().slice(0, 7),
+    status: "accrued",
+  });
+  return { accrued: true, amount: commission };
+}
+
+/**
+ * Landed-white-label commission: the sales rep who landed a white-label earns
+ * `whitelabelRate × platform share` on every payment that white-label collects,
+ * for 12 months from when it was landed. Independent of any customer referral.
+ */
+export async function accrueLandedCommission(payment: {
+  id: string;
+  tenantId: string;
+  amountUsd: string | number;
+  paidAt?: Date | string | null;
+}): Promise<{ accrued: boolean; amount?: number }> {
+  const t = (await db.select({ fee: tenants.platformFeeRate, landedBy: tenants.landedByUserId, landedAt: tenants.landedAt }).from(tenants).where(eq(tenants.id, payment.tenantId)).limit(1))[0];
+  if (!t?.landedBy || !t.landedAt) return { accrued: false };
+
+  const now = payment.paidAt ? new Date(payment.paidAt) : new Date();
+  const windowEnd = new Date(t.landedAt);
+  windowEnd.setMonth(windowEnd.getMonth() + 12);
+  if (now > windowEnd) return { accrued: false };
+
+  const rc = (await db.select().from(referralCodes).where(and(eq(referralCodes.ownerUserId, t.landedBy), eq(referralCodes.scope, "platform"))).limit(1))[0];
+  if (!rc) return { accrued: false };
+  const rate = num(rc.whitelabelRate ?? "0");
+  if (rate <= 0) return { accrued: false };
+
+  const dup = (await db.select({ id: commissionLedger.id }).from(commissionLedger).where(and(eq(commissionLedger.paymentId, payment.id), eq(commissionLedger.kind, "whitelabel"))).limit(1))[0];
+  if (dup) return { accrued: false };
+
+  const amount = num(payment.amountUsd);
+  if (amount <= 0) return { accrued: false };
+  const basis = amount * clamp01(num(t.fee)); // platform share
+  const commission = basis * clamp01(rate);
+  if (commission <= 0) return { accrued: false };
+
+  await db.insert(commissionLedger).values({
+    referralCodeId: rc.id,
+    ownerUserId: t.landedBy,
+    referredUserId: null,
+    paymentId: payment.id,
+    kind: "whitelabel",
+    basisAmount: String(basis),
+    rate: String(clamp01(rate)),
+    amount: String(commission),
+    scope: "platform",
     tenantId: payment.tenantId,
     periodMonth: now.toISOString().slice(0, 7),
     status: "accrued",

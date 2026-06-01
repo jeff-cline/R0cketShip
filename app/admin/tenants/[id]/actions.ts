@@ -1,7 +1,10 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
 import { requireAuth } from "@/src/auth/guard";
+import { db } from "@/src/db/client";
+import { tenants } from "@/src/db/schema";
 import { updateTenantConfig } from "@/src/tenant/manage";
 import type { Offer } from "@/src/tenant/types";
 
@@ -61,6 +64,25 @@ export async function updateAction(formData: FormData) {
     platformFeeRate,
     dataCostRate,
   });
+
+  revalidatePath(`/admin/tenants/${id}`);
+  redirect(`/admin/tenants/${id}`);
+}
+
+/** GOD only: assign the sales rep who landed this white-label. */
+export async function setLandedByAction(formData: FormData) {
+  await requireAuth(["god"]);
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+  const landedByUserId = String(formData.get("landedByUserId") ?? "") || null;
+
+  await db
+    .update(tenants)
+    .set({
+      landedByUserId,
+      landedAt: landedByUserId ? new Date() : null,
+    })
+    .where(eq(tenants.id, id));
 
   revalidatePath(`/admin/tenants/${id}`);
   redirect(`/admin/tenants/${id}`);

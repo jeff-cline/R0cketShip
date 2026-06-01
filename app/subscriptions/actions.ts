@@ -7,9 +7,10 @@ export async function subscribeAction(_prev: unknown, formData: FormData): Promi
   const ctx = await requireAuth(["customer"]);
   const zip = String(formData.get("zip") ?? "").trim();
   const offer = String(formData.get("offer") ?? "data") as "data" | "booking" | "epartner";
+  const coupon = String(formData.get("coupon") ?? "").trim() || undefined;
   if (!zip) return { error: "Enter a ZIP." };
   try {
-    const { subscription } = await subscribeZip(ctx.user.id, zip, offer);
+    const { subscription } = await subscribeZip(ctx.user.id, zip, offer, coupon);
     revalidatePath("/subscriptions");
     return { ok: `Subscribed to ${zip} at ${subscription.monthlyPrice}/mo — invoice pending confirmation.` };
   } catch (e) {

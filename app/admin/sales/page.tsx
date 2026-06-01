@@ -2,6 +2,7 @@ import { requireAuth } from "@/src/auth/guard";
 import { allReps } from "@/src/referral/reports";
 import { getPlatformSettings } from "@/src/referral/core";
 import { listPayoutBatches } from "@/src/referral/payouts";
+import { payoutRailsConfigured } from "@/src/referral/disburse";
 import {
   PageHeader,
   Card,
@@ -19,6 +20,7 @@ import {
   addSalesManagerAction,
   runPayoutAction,
   markPaidAction,
+  disburseAction,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +36,11 @@ export default async function SalesPage() {
   const ctx = await requireAuth(["god", "sales_manager"]);
   const isGod = ctx.user.role === "god";
 
-  const [reps, settings, batches] = await Promise.all([
+  const [reps, settings, batches, rails] = await Promise.all([
     allReps(),
     getPlatformSettings(),
     listPayoutBatches(),
+    payoutRailsConfigured(),
   ]);
 
   const totalReferred = reps.reduce((s, r) => s + r.funnel.referred, 0);
@@ -206,6 +209,12 @@ export default async function SalesPage() {
           </div>
         </form>
 
+        <p className="mb-3 text-sm" style={{ color: "var(--muted)" }}>
+          PayPal {rails.paypal ? "✓ ready" : "✗ add keys"} · Stripe{" "}
+          {rails.stripe ? "✓ ready" : "✗ add keys"}
+          <span style={{ color: "var(--muted-2)" }}> — Configure keys under Admin → Integrations.</span>
+        </p>
+
         {batches.length === 0 ? (
           <p className="text-sm" style={{ color: "var(--muted)" }}>
             No payout runs yet.
@@ -225,12 +234,20 @@ export default async function SalesPage() {
                 <Td>{new Date(b.createdAt).toLocaleDateString()}</Td>
                 <Td>
                   {b.status !== "sent" && (
-                    <form action={markPaidAction}>
-                      <input type="hidden" name="batchId" value={b.id} />
-                      <button type="submit" className="btn btn-ghost">
-                        Mark paid
-                      </button>
-                    </form>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <form action={markPaidAction}>
+                        <input type="hidden" name="batchId" value={b.id} />
+                        <button type="submit" className="btn btn-ghost">
+                          Mark paid
+                        </button>
+                      </form>
+                      <form action={disburseAction}>
+                        <input type="hidden" name="batchId" value={b.id} />
+                        <button type="submit" className="btn btn-primary">
+                          Pay via PayPal/Stripe
+                        </button>
+                      </form>
+                    </div>
                   )}
                 </Td>
               </Tr>

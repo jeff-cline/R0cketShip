@@ -89,4 +89,17 @@ describe("referral attribution + accrual", () => {
     const r = await accrueCommissionForPayment(await paidPayment("100", new Date("2026-03-10T00:00:00Z")));
     expect(r.amount).toBeCloseTo(12, 6); // platform: 0.2 × 0.6 × 100
   });
+
+  it("accrues landed-white-label commission to the rep who landed the tenant", async () => {
+    const { accrueLandedCommission } = await import("@/src/referral/commission");
+    const { tenants } = await import("@/src/db/schema");
+    const { eq } = await import("drizzle-orm");
+    const rep = await createUser({ role: "god", tenantId: tId }, { tenantId: tId, email: "rep@roofers.co", role: "partner", tempPassword: "x" });
+    const repCode = await getOrCreateRepCode(rep.id); // whitelabelRate defaults to platform setting (0.10)
+    await db.update(tenants).set({ landedByUserId: rep.id, landedAt: new Date("2026-01-01T00:00:00Z") }).where(eq(tenants.id, tId));
+    const r = await accrueLandedCommission(await paidPayment("100", new Date("2026-03-10T00:00:00Z")));
+    expect(r.accrued).toBe(true);
+    expect(r.amount).toBeCloseTo(6, 6); // 0.10 × 0.60 × 100
+    void repCode;
+  });
 });

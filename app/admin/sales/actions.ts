@@ -8,6 +8,7 @@ import { createUser } from "@/src/auth/users";
 import { hashPassword } from "@/src/auth/password";
 import { getOrCreateRepCode, setPlatformSettings } from "@/src/referral/core";
 import { runPayoutBatch, markBatchPaid } from "@/src/referral/payouts";
+import { disburseBatch } from "@/src/referral/disburse";
 
 type Role = "partner" | "sales_manager";
 
@@ -125,5 +126,14 @@ export async function markPaidAction(formData: FormData) {
   const batchId = String(formData.get("batchId") ?? "").trim();
   if (!batchId) return;
   await markBatchPaid(batchId);
+  revalidatePath("/admin/sales");
+}
+
+/** Disburse a queued payout batch via each partner's chosen rail (PayPal/Stripe). */
+export async function disburseAction(formData: FormData) {
+  await requireAuth(["god", "sales_manager"]);
+  const batchId = String(formData.get("batchId") ?? "").trim();
+  if (!batchId) return;
+  await disburseBatch(batchId);
   revalidatePath("/admin/sales");
 }

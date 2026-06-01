@@ -44,6 +44,9 @@ export default async function IntegrationsAdminPage() {
                 <label className="col-span-2 mt-2 font-medium">PayPal</label>
                 <input name="paypalClientId" defaultValue={i.paypalClientId ?? ""} placeholder="client id" className="input" />
                 <input name="paypalSecret" type="password" placeholder={i.paypalSecret ? maskSecret(i.paypalSecret) : "secret"} className="input" />
+                <p className="col-span-2 text-xs" style={{ color: "var(--muted)" }}>
+                  These PayPal and Stripe keys also power partner commission payouts (PayPal Payouts &amp; Stripe Connect transfers) on the 21st run.
+                </p>
 
                 <label className="col-span-2 mt-2 font-medium">Twilio</label>
                 <input name="twilioAccountSid" defaultValue={i.twilioAccountSid ?? ""} placeholder="AC..." className="input" />
