@@ -1,11 +1,21 @@
 "use client";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { loginAction } from "./actions";
 import { Card, Field } from "@/app/_ui/primitives";
 import { Rocket } from "@/app/_ui/Rocket";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, {});
+  const reset = useSearchParams().get("reset");
   return (
     <div className="flex min-h-screen items-center justify-center px-6 py-16" style={{ background: "var(--bg-app)" }}>
       <Card pad className="w-full max-w-sm">
@@ -15,6 +25,9 @@ export default function LoginPage() {
           </span>
           <h1 className="text-xl font-extrabold">Sign in</h1>
         </div>
+        {reset && (
+          <p className="mb-4 text-sm" style={{ color: "var(--muted)" }}>Password updated — sign in.</p>
+        )}
         <form action={action} className="flex flex-col gap-4">
           <Field label="Email">
             <input name="email" type="email" placeholder="you@company.com" required className="input" />
@@ -26,6 +39,9 @@ export default function LoginPage() {
           <button type="submit" disabled={pending} className="btn btn-primary w-full">
             {pending ? "Signing in…" : "Sign in"}
           </button>
+          <a href="/forgot" className="text-center text-sm" style={{ color: "var(--muted)" }}>
+            Forgot password?
+          </a>
         </form>
       </Card>
     </div>
