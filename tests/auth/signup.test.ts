@@ -37,4 +37,12 @@ describe("signupCustomer", () => {
     const u = await signupCustomer(tB, { email: "shared@x.co", password: "hunter2pw" });
     expect(u.tenantId).toBe(tB);
   });
+  it("records a referral when a valid ref code is supplied", async () => {
+    const { getOrCreateCode } = await import("@/src/affiliate/code");
+    const { affiliateStats } = await import("@/src/affiliate/referral");
+    const affiliate = await signupCustomer(tA, { email: "aff2@roofers.co", password: "hunter2pw" });
+    const code = await getOrCreateCode(affiliate.id);
+    await signupCustomer(tA, { email: "ref2@roofers.co", password: "hunter2pw", refCode: code });
+    expect((await affiliateStats(affiliate.id)).referrals).toBe(1);
+  });
 });

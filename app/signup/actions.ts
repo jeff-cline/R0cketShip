@@ -16,6 +16,7 @@ export async function signupAction(_prev: unknown, formData: FormData): Promise<
       password: String(formData.get("password") ?? ""),
       name: String(formData.get("name") ?? ""),
       businessName: String(formData.get("businessName") ?? ""),
+      refCode: String(formData.get("ref") ?? "").trim() || undefined,
     });
   } catch (e) {
     return { error: (e as Error).message };
