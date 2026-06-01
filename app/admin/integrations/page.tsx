@@ -34,6 +34,12 @@ export default async function IntegrationsAdminPage() {
               <input name="twilioAccountSid" defaultValue={i.twilioAccountSid ?? ""} placeholder="AC..." className="rounded border p-2" />
               <input name="twilioAuthToken" type="password" placeholder={i.twilioAuthToken ? maskSecret(i.twilioAuthToken) : "auth token"} className="rounded border p-2" />
               <input name="twilioFromNumber" defaultValue={i.twilioFromNumber ?? ""} placeholder="+1770..." className="col-span-2 rounded border p-2" />
+              <label className="col-span-2 mt-2 font-medium">SMTP (email)</label>
+              <input name="smtpHost" defaultValue={i.smtpHost ?? ""} placeholder="smtp host" className="rounded border p-2" />
+              <input name="smtpPort" defaultValue={i.smtpPort ?? ""} placeholder="port (587)" className="rounded border p-2" />
+              <input name="smtpUser" defaultValue={i.smtpUser ?? ""} placeholder="smtp user" className="rounded border p-2" />
+              <input name="smtpPass" type="password" placeholder={i.smtpPass ? maskSecret(i.smtpPass) : "smtp password"} className="rounded border p-2" />
+              <input name="smtpFrom" defaultValue={i.smtpFrom ?? ""} placeholder="from (e.g. leads@roofers.co)" className="col-span-2 rounded border p-2" />
               <div className="col-span-2 mt-2 flex items-center gap-2">
                 <label>Active payment provider:</label>
                 <select name="activePaymentProvider" defaultValue={i.activePaymentProvider} className="rounded border p-2">
