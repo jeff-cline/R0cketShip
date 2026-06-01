@@ -4,7 +4,8 @@ import { tenants } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { THEME_PRESETS } from "@/src/tenant/manage";
 import { notFound } from "next/navigation";
-import { saveConfigAction, regenerateThemeAction } from "./actions";
+import { saveConfigAction } from "./actions";
+import { ThemeEditor } from "@/app/admin/ThemeEditor";
 
 export default async function TenantEditPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAuth(["god"]);
@@ -12,7 +13,6 @@ export default async function TenantEditPage({ params }: { params: Promise<{ id:
   const t = (await db.select().from(tenants).where(eq(tenants.id, id)).limit(1))[0];
   if (!t) notFound();
   const offers = (t.offers as { id: number; title: string; description: string; price: string }[]) ?? [];
-  const themeIdx = Math.max(0, THEME_PRESETS.findIndex((p) => p.accent === (t.theme as { accent: string }).accent));
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
@@ -35,12 +35,8 @@ export default async function TenantEditPage({ params }: { params: Promise<{ id:
           );
         })}
         <textarea name="footerHtml" defaultValue={t.footerHtml} placeholder="footer HTML" className="col-span-2 rounded border p-2" rows={3} />
+        <ThemeEditor theme={t.theme as any} style={t.style} presets={THEME_PRESETS} />
         <button className="col-span-2 mt-2 rounded bg-black px-4 py-2 text-white">Save config</button>
-      </form>
-      <form action={regenerateThemeAction} className="mt-3">
-        <input type="hidden" name="id" value={t.id} />
-        <input type="hidden" name="themeIdx" value={themeIdx} />
-        <button className="rounded border px-3 py-2 text-sm">Regenerate look (current preset {themeIdx + 1})</button>
       </form>
       <a href={`https://${t.domain}/`} target="_blank" className="mt-4 inline-block text-sm underline">View site →</a>
     </main>
