@@ -7,7 +7,7 @@ import { ensureWalletWithBonus } from "../billing/wallet";
 /** Public self-service signup → creates a customer (own password, no forced reset) + $50 wallet. */
 export async function signupCustomer(
   tenantId: string,
-  input: { email: string; password: string; name?: string; businessName?: string },
+  input: { email: string; password: string; name?: string; businessName?: string; refCode?: string },
 ) {
   const email = input.email.toLowerCase().trim();
   if (!email.includes("@")) throw new Error("invalid email");
@@ -22,5 +22,9 @@ export async function signupCustomer(
     .values({ tenantId, email, passwordHash: await hashPassword(input.password), role: "customer", mustResetPassword: false, name: displayName })
     .returning();
   await ensureWalletWithBonus(row.id);
+  if (input.refCode) {
+    const { recordReferral } = await import("../affiliate/referral");
+    await recordReferral(row.id, input.refCode);
+  }
   return row;
 }

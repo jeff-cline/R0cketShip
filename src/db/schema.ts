@@ -130,7 +130,7 @@ export const leads = pgTable(
 );
 
 export const ledgerType = pgEnum("ledger_type", [
-  "signup_bonus", "topup", "coupon", "admin_grant", "lead_charge", "refund", "adjustment",
+  "signup_bonus", "topup", "coupon", "admin_grant", "lead_charge", "refund", "adjustment", "affiliate",
 ]);
 export const paymentProvider = pgEnum("payment_provider", ["manual", "stripe", "paypal"]);
 export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
@@ -265,4 +265,19 @@ export const zipSubscriptions = pgTable("zip_subscriptions", {
   paidThrough: timestamp("paid_through"),
   startedAt: timestamp("started_at").notNull().defaultNow(),
   canceledAt: timestamp("canceled_at"),
+});
+
+export const affiliates = pgTable("affiliates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  customerId: uuid("customer_id").notNull().references(() => users.id).unique(),
+  code: text("code").notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const referrals = pgTable("referrals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  referredCustomerId: uuid("referred_customer_id").notNull().references(() => users.id).unique(),
+  affiliateCustomerId: uuid("affiliate_customer_id").notNull().references(() => users.id),
+  code: text("code").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });

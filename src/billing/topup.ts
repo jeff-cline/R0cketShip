@@ -3,6 +3,7 @@ import { db } from "../db/client";
 import { payments, creditLedger, coupons, wallets, zipSubscriptions } from "../db/schema";
 import { validateCoupon } from "./coupons";
 import { getProvider } from "./provider";
+import { creditAffiliateCommission } from "../affiliate/commission";
 
 export async function createTopup(walletId: string, amountUsd: number, couponCode?: string) {
   const wallet = (await db.select().from(wallets).where(eq(wallets.id, walletId)).limit(1))[0];
@@ -63,6 +64,7 @@ export async function confirmPayment(paymentId: string) {
       const c = (await tx.select().from(coupons).where(eq(coupons.code, p.couponCode)).limit(1))[0];
       if (c) await tx.update(coupons).set({ timesRedeemed: sql`${coupons.timesRedeemed} + 1` }).where(eq(coupons.id, c.id));
     }
+    await creditAffiliateCommission(tx, p);
     return { ...p, status: "paid" as const };
   });
 }
