@@ -12,7 +12,9 @@ export function SubscribeForm() {
         <option value="booking">Booking ($4,500/mo)</option>
         <option value="epartner">E-Partnership (negotiated)</option>
       </select>
+      <input name="coupon" placeholder="Coupon code (optional)" className="input" style={{ maxWidth: 200 }} />
       <button disabled={pending} className="btn btn-primary">{pending ? "Subscribing…" : "Subscribe ZIP"}</button>
+      <span className="w-full text-xs" style={{ color: "var(--muted-2)" }}>Have a code? Enter it to get your discount.</span>
       {state?.error && <span className="text-sm" style={{ color: "var(--neg)" }}>{state.error}</span>}
       {state?.ok && <span className="text-sm" style={{ color: "var(--pos)" }}>{state.ok}</span>}
     </form>

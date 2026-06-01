@@ -7,9 +7,10 @@ import { StatBar, FeatureGrid, HowItWorks, PricingBlock, Testimonials, EPartnerB
 
 export function BoldTemplate({ tenant }: { tenant: Tenant }) {
   const c = marketingContent(tenant);
+  const hub = tenant.domain.replace(/^www\./, "") === "r0cketship.com";
   return (
     <main>
-      <MarketingNav brand={tenant.moneyWord} />
+      <MarketingNav brand={tenant.moneyWord} hub={hub} />
       <Hero content={c} variant="bold" />
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} />
@@ -17,16 +18,17 @@ export function BoldTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} />
       <Testimonials testimonials={c.testimonials} />
       <EPartnerBand />
-      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} hub={hub} />
     </main>
   );
 }
 
 export function TrustTemplate({ tenant }: { tenant: Tenant }) {
   const c = marketingContent(tenant);
+  const hub = tenant.domain.replace(/^www\./, "") === "r0cketship.com";
   return (
     <main>
-      <MarketingNav brand={tenant.moneyWord} />
+      <MarketingNav brand={tenant.moneyWord} hub={hub} />
       <Hero content={c} variant="trust" />
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} />
@@ -34,16 +36,17 @@ export function TrustTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} />
       <Testimonials testimonials={c.testimonials} />
       <EPartnerBand />
-      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} hub={hub} />
     </main>
   );
 }
 
 export function DarkTemplate({ tenant }: { tenant: Tenant }) {
   const c = marketingContent(tenant);
+  const hub = tenant.domain.replace(/^www\./, "") === "r0cketship.com";
   return (
     <main style={{ background: "#0a0d12", color: "#fff" }}>
-      <MarketingNav brand={tenant.moneyWord} dark />
+      <MarketingNav brand={tenant.moneyWord} dark hub={hub} />
       <Hero content={c} variant="dark" />
       <StatBar stats={c.stats} />
       <FeatureGrid features={c.features} dark />
@@ -51,7 +54,7 @@ export function DarkTemplate({ tenant }: { tenant: Tenant }) {
       <PricingBlock offers={c.offers} dark />
       <Testimonials testimonials={c.testimonials} dark />
       <EPartnerBand dark />
-      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} />
+      <MarketingFooter footerHtml={c.footerHtml} becomeAPartner={tenant.showBecomeAPartner} hub={hub} />
     </main>
   );
 }

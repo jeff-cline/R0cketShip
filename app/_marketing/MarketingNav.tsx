@@ -1,10 +1,11 @@
-export function MarketingNav({ brand, dark = false }: { brand: string; dark?: boolean }) {
+export function MarketingNav({ brand, dark = false, hub = false }: { brand: string; dark?: boolean; hub?: boolean }) {
   const fg = dark ? "#fff" : "var(--color-foreground)";
   const links = [
     { href: "/how-it-works", label: "How it works" },
     { href: "/pricing", label: "Pricing" },
     { href: "/integrations", label: "Integrations" },
-    { href: "/niches", label: "Niches" },
+    // "Niches" is the directory of all white-labels — only the r0cketship.com hub shows it.
+    ...(hub ? [{ href: "/niches", label: "Niches" }] : []),
     { href: "/login", label: "Sign in" },
   ];
   return (

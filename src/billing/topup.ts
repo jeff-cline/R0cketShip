@@ -3,7 +3,7 @@ import { db } from "../db/client";
 import { payments, creditLedger, coupons, wallets, zipSubscriptions } from "../db/schema";
 import { validateCoupon } from "./coupons";
 import { resolveTopupProvider, type TopupStart } from "./provider-resolve";
-import { accrueCommissionForPayment } from "../referral/commission";
+import { accrueCommissionForPayment, accrueLandedCommission } from "../referral/commission";
 
 export async function createTopup(
   walletId: string,
@@ -68,7 +68,9 @@ export async function confirmPayment(paymentId: string) {
 
   // Partner/sales commission on collected money (top-ups + subscriptions), outside the tx.
   if (newlyPaid) {
-    await accrueCommissionForPayment({ id: payment.id, tenantId: payment.tenantId, walletId: payment.walletId, amountUsd: payment.amountUsd, paidAt: payment.paidAt ?? new Date() });
+    const pay = { id: payment.id, tenantId: payment.tenantId, walletId: payment.walletId, amountUsd: payment.amountUsd, paidAt: payment.paidAt ?? new Date() };
+    await accrueCommissionForPayment(pay);
+    await accrueLandedCommission(pay); // rep who landed this white-label
   }
   return payment;
 }

@@ -127,6 +127,13 @@
       "when": 1780341686256,
       "tag": "0017_normal_bill_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1780344959346,
+      "tag": "0018_huge_skaar",
+      "breakpoints": true
     }
   ]
 }

@@ -52,6 +52,9 @@ export const tenants = pgTable("tenants", {
   partnerRate: numeric("partner_rate").notNull().default("0.20"),
   showBecomeAPartner: boolean("show_become_a_partner").notNull().default(false),
   customerFundingPolicy: text("customer_funding_policy").notNull().default("self"), // self | owner
+  // Sales rep who landed this white-label (god sales org), for landed-commission accrual.
+  landedByUserId: uuid("landed_by_user_id"),
+  landedAt: timestamp("landed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -151,7 +154,7 @@ export const ledgerType = pgEnum("ledger_type", [
 ]);
 export const paymentProvider = pgEnum("payment_provider", ["manual", "stripe", "paypal"]);
 export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
-export const couponKind = pgEnum("coupon_kind", ["percent", "fixed_credits"]);
+export const couponKind = pgEnum("coupon_kind", ["percent", "fixed_credits", "percent_off"]);
 export const paymentPurpose = pgEnum("payment_purpose", ["topup", "subscription"]);
 
 export const wallets = pgTable("wallets", {
@@ -192,8 +195,10 @@ export const coupons = pgTable("coupons", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id"),
   code: text("code").notNull().unique(),
+  name: text("name"), // display name (god-assigned)
   kind: couponKind("kind").notNull(),
   value: numeric("value").notNull(),
+  durationMonths: integer("duration_months"), // null = forever; else 1/2/3… discounted months
   maxRedemptions: integer("max_redemptions"),
   timesRedeemed: integer("times_redeemed").notNull().default(0),
   expiresAt: timestamp("expires_at"),
@@ -438,6 +443,10 @@ export const zipSubscriptions = pgTable("zip_subscriptions", {
   monthlyPrice: numeric("monthly_price").notNull(),
   status: subscriptionStatus("status").notNull().default("active"),
   paidThrough: timestamp("paid_through"),
+  // Active coupon discount on this subscription (god-issued % off for N months / forever).
+  couponCode: text("coupon_code"),
+  discountPercent: numeric("discount_percent"),
+  discountMonthsLeft: integer("discount_months_left"), // null = forever; decrements per invoice
   startedAt: timestamp("started_at").notNull().defaultNow(),
   canceledAt: timestamp("canceled_at"),
 });

@@ -1,6 +1,6 @@
 import { requireAuth } from "@/src/auth/guard";
 import { db } from "@/src/db/client";
-import { tenants } from "@/src/db/schema";
+import { tenants, users, referralCodes } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { NAMED_PRESETS } from "@/src/tenant/manage";
@@ -9,7 +9,7 @@ import { PageHeader, Card, SectionTitle, StatCard, Badge, Field } from "@/app/_u
 import { DnsInstructions } from "@/app/admin/_shell/DnsInstructions";
 import { ThemeEditor } from "@/app/admin/ThemeEditor";
 import type { Offer, TenantTheme } from "@/src/tenant/types";
-import { updateAction } from "./actions";
+import { updateAction, setLandedByAction } from "./actions";
 
 const usd = (n: number) => (n >= 1000 ? "$" + (n / 1000).toFixed(1) + "k" : "$" + n.toFixed(0));
 
@@ -27,6 +27,17 @@ export default async function TenantManagePage({
   if (!t) notFound();
 
   const offers = (t.offers as Offer[]) ?? [];
+
+  // Sales reps = distinct owners of platform-scope referral codes, joined to users for email.
+  const reps = await db
+    .selectDistinct({ id: users.id, email: users.email })
+    .from(referralCodes)
+    .innerJoin(users, eq(users.id, referralCodes.ownerUserId))
+    .where(eq(referralCodes.scope, "platform"));
+  const landedByEmail = t.landedByUserId
+    ? reps.find((r) => r.id === t.landedByUserId)?.email ?? null
+    : null;
+
   const e = await tenantEconomics({ id: t.id, platformFeeRate: t.platformFeeRate, dataCostRate: t.dataCostRate });
   const feePct = (Number(t.platformFeeRate) * 100).toString();
   const dataPct = (Number(t.dataCostRate) * 100).toString();
@@ -59,6 +70,40 @@ export default async function TenantManagePage({
             <StatCard label="Your 60%" value={usd(e.platformRevenue)} accent />
             <StatCard label="Gross profit" value={usd(e.grossProfit)} sub={`${(e.grossMargin * 100).toFixed(0)}% margin`} />
           </div>
+        </Card>
+      </div>
+
+      {/* Landed by (sales rep) */}
+      <div className="mb-6">
+        <Card>
+          <SectionTitle hint="The platform sales rep who landed this white-label.">
+            Landed by (sales rep)
+          </SectionTitle>
+          <p className="mb-4 text-sm" style={{ color: "var(--muted)" }}>
+            Currently: {landedByEmail ?? "— none —"}
+          </p>
+          <form action={setLandedByAction} className="flex flex-wrap items-end gap-4">
+            <input type="hidden" name="id" value={t.id} />
+            <Field label="Sales rep">
+              <select
+                name="landedByUserId"
+                defaultValue={t.landedByUserId ?? ""}
+                className="input"
+              >
+                <option value="">— none —</option>
+                {reps.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.email}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div>
+              <button type="submit" className="btn btn-primary">
+                Save landed-by
+              </button>
+            </div>
+          </form>
         </Card>
       </div>
 
