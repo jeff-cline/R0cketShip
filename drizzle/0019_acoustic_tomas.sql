@@ -1,0 +1,1 @@
+ALTER TABLE "tenants" ADD COLUMN "show_on_niches" boolean DEFAULT false NOT NULL;

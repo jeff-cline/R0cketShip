@@ -27,7 +27,7 @@ export default async function NichesPage() {
   const current = await getCurrentTenant();
   const all = await db.select().from(tenants).where(eq(tenants.status, "active"));
   const list = all.filter(
-    (t) => t.domain.replace(/^www\./, "") !== "r0cketship.com",
+    (t) => t.showOnNiches && t.domain.replace(/^www\./, "") !== "r0cketship.com",
   );
 
   const brand = current?.moneyWord ?? "R0cketShip";

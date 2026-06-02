@@ -1,5 +1,6 @@
 export function MarketingNav({ brand, dark = false, hub = false }: { brand: string; dark?: boolean; hub?: boolean }) {
   const fg = dark ? "#fff" : "var(--color-foreground)";
+  const brandText = brand.replace(/\bleads\b/gi, "Predictive Data");
   const links = [
     { href: "/how-it-works", label: "How it works" },
     { href: "/pricing", label: "Pricing" },
@@ -13,7 +14,7 @@ export function MarketingNav({ brand, dark = false, hub = false }: { brand: stri
       className="sticky top-0 z-30 flex items-center justify-between px-5 py-4 backdrop-blur sm:px-6"
       style={{ background: dark ? "rgba(10,13,18,.7)" : "rgba(255,255,255,.82)", borderBottom: "1px solid rgba(125,125,125,.15)" }}
     >
-      <a href="/" className="text-lg font-extrabold capitalize" style={{ color: fg }}>{brand}</a>
+      <a href="/" className="text-lg font-extrabold capitalize" style={{ color: fg }}>{brandText}</a>
 
       {/* desktop */}
       <div className="hidden items-center gap-6 text-sm md:flex" style={{ color: fg }}>

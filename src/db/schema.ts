@@ -55,6 +55,8 @@ export const tenants = pgTable("tenants", {
   // Sales rep who landed this white-label (god sales org), for landed-commission accrual.
   landedByUserId: uuid("landed_by_user_id"),
   landedAt: timestamp("landed_at"),
+  // Whether this white-label is listed on the r0cketship.com /niches directory.
+  showOnNiches: boolean("show_on_niches").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
