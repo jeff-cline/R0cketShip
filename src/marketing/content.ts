@@ -25,6 +25,11 @@ function titleCase(s: string): string {
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** Reposition the brand from "leads" to "Predictive Data" in headlines/titles. */
+export function leadsToPredictiveData(s: string): string {
+  return s.replace(/\bleads\b/gi, "Predictive Data");
+}
+
 export function marketingContent(tenant: Tenant): MarketingContent {
   const niche = tenant.niche;
   return {
@@ -32,7 +37,7 @@ export function marketingContent(tenant: Tenant): MarketingContent {
     niche,
     offers: tenant.offers,
     footerHtml: tenant.footerHtml,
-    headline: tenant.heroHeadline || titleCase(tenant.moneyWord),
+    headline: leadsToPredictiveData(tenant.heroHeadline || titleCase(tenant.moneyWord)),
     heroImage: tenant.heroImage,
     heroVideo: tenant.heroVideo,
     subhead:

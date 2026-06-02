@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Inter, Fraunces } from "next/font/google";
 import { getCurrentTenant } from "@/src/tenant/context";
 import type { TenantTheme } from "@/src/tenant/types";
-import { RocketBadge } from "@/app/_marketing/RocketBadge";
 
 const display = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["600", "700", "800"], variable: "--font-display" });
 const body = Inter({ subsets: ["latin"], variable: "--font-body" });
@@ -18,12 +17,13 @@ function seoFor(t: Awaited<ReturnType<typeof getCurrentTenant>>) {
   const domain = (t?.domain ?? "r0cketship.com").replace(/^www\./, "");
   const base = `https://${domain}`;
   const isHub = domain === "r0cketship.com";
-  const brand = t?.moneyWord ? titleCase(t.moneyWord) : "R0cketShip";
+  const ld = (s: string) => s.replace(/\bleads\b/gi, "Predictive Data");
+  const brand = ld(t?.moneyWord ? titleCase(t.moneyWord) : "R0cketShip");
   const niche = t?.niche ? titleCase(t.niche) : "Business";
-  // "Roofing Leads" — avoid doubling "Leads" when the money word already has it.
-  const phrase = t?.moneyWord && /lead/i.test(t.moneyWord) ? titleCase(t.moneyWord) : `${niche} Leads`;
+  // "Roofing Predictive Data" — avoid doubling when the money word already has "leads".
+  const phrase = ld(t?.moneyWord && /lead/i.test(t.moneyWord) ? titleCase(t.moneyWord) : `${niche} Leads`);
   const title = isHub
-    ? "R0cketShip — White-Label Lead Networks by Niche"
+    ? "R0cketShip — White-Label Predictive Data Networks by Niche"
     : `${phrase} in Your ZIP — ${domain}`;
   const description = isHub
     ? "R0cketShip powers white-label lead networks — predictive, ZIP-exclusive leads delivered to your CRM. Browse niches or launch your own."
@@ -121,7 +121,6 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
-        <RocketBadge />
       </body>
     </html>
   );

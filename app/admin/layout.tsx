@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/partner-program", label: "Partner program" },
         ...(isGod ? [{ href: "/admin/sales", label: "Sales team" }] : []),
         ...(isGod ? [{ href: "/admin/coupons", label: "Coupons" }] : []),
+        ...(isGod ? [{ href: "/admin/niches", label: "Niches" }] : []),
         ...(isGod ? [{ href: "/admin/data", label: "Data" }] : []),
         { href: "/admin/leads", label: "Leads" },
         { href: "/admin/integrations", label: "Integrations" },
