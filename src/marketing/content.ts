@@ -6,7 +6,7 @@ export interface MTestimonial { quote: string; author: string; meta: string }
 export interface MarketingContent {
   moneyWord: string;
   niche: string;
-  offers: { id: number; title: string; description: string; price: string }[];
+  offers: { id: number; title: string; description: string; price: string; features?: string[] }[];
   /** Hero H1 — tenant override when set, else the money word. */
   headline: string;
   subhead: string;

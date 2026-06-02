@@ -1,4 +1,5 @@
 import type { MFeature, MStat, MTestimonial } from "@/src/marketing/content";
+import { Rocket } from "@/app/_ui/Rocket";
 
 export function StatBar({ stats }: { stats: MStat[] }) {
   return (
@@ -51,21 +52,43 @@ export function HowItWorks({ steps, dark }: { steps: { title: string; desc: stri
   );
 }
 
-export function PricingBlock({ offers, dark }: { offers: { id: number; title: string; description: string; price: string }[]; dark?: boolean }) {
+export function PricingBlock({ offers, dark }: { offers: { id: number; title: string; description: string; price: string; features?: string[] }[]; dark?: boolean }) {
   return (
-    <section className="px-6 py-16" style={dark ? { background: "#0a0d12", color: "#fff" } : undefined}>
-      <div className="mx-auto max-w-5xl">
-        <h2 className="text-center text-3xl font-extrabold">Simple, exclusive pricing</h2>
-        <div className="mt-10 grid items-center gap-5 md:grid-cols-3">
+    <section className="px-6 py-20" style={dark ? { background: "#0a0d12", color: "#fff" } : undefined}>
+      <div className="mx-auto max-w-6xl">
+        <h2 className="text-center text-3xl font-extrabold sm:text-4xl">Simple, exclusive pricing</h2>
+        <div className="mt-12 grid items-stretch gap-6 md:grid-cols-3">
           {offers.map((o, i) => {
             const featured = i === 1;
+            const feats = (o.features ?? []).filter((f) => f && f.trim());
             return (
-              <div key={o.id} className="rounded-3xl p-6" style={featured ? { background: "var(--color-primary)", color: "var(--color-background)", boxShadow: "var(--shadow-lg)", transform: "scale(1.03)" } : { background: dark ? "rgba(255,255,255,.03)" : "#fff", border: `1px solid ${dark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)"}`, boxShadow: dark ? "none" : "var(--shadow-sm)" }}>
-                {featured && <div className="inline-block rounded-full px-3 py-1 text-xs font-extrabold" style={{ background: "var(--color-accent)", color: "var(--color-primary)" }}>MOST POPULAR</div>}
-                <div className={featured ? "mt-2 font-bold" : "font-bold"}>{o.title}</div>
-                <div className="mt-2 text-3xl font-extrabold">{o.price}</div>
-                <div className="mt-2 text-sm opacity-80">{o.description}</div>
-                <a href="/signup" className="mt-5 block rounded-full py-3 text-center font-bold" style={featured ? { background: "var(--color-accent)", color: "var(--color-primary)" } : { border: "1.5px solid var(--color-accent)", color: "var(--color-accent)" }}>Get started</a>
+              <div
+                key={o.id}
+                className="flex flex-col rounded-3xl p-8"
+                style={featured
+                  ? { background: "var(--color-primary)", color: "var(--color-background)", boxShadow: "var(--shadow-lg)" }
+                  : { background: dark ? "rgba(255,255,255,.03)" : "#fff", border: `1px solid ${dark ? "rgba(255,255,255,.1)" : "rgba(0,0,0,.08)"}`, boxShadow: dark ? "none" : "var(--shadow-sm)" }}
+              >
+                {featured && <div className="mb-3 inline-block self-start rounded-full px-3 py-1 text-xs font-extrabold" style={{ background: "var(--color-accent)", color: "var(--color-primary)" }}>MOST POPULAR</div>}
+                <div className="text-lg font-extrabold">{o.title}</div>
+                <div className="mt-3 text-4xl font-extrabold tracking-tight">{o.price}</div>
+                <div className="mt-3 text-sm opacity-80">{o.description}</div>
+
+                {feats.length > 0 && (
+                  <div className="mt-6">
+                    <div className="text-xs font-bold uppercase tracking-wide" style={{ opacity: 0.55 }}>What you get</div>
+                    <ul className="mt-3 flex flex-col gap-3">
+                      {feats.map((f, j) => (
+                        <li key={j} className="flex items-start gap-2.5 text-sm leading-snug">
+                          <span className="mt-0.5 shrink-0"><Rocket size={15} color="var(--color-accent)" /></span>
+                          <span style={{ opacity: 0.92 }}>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <a href="/signup" className="mt-auto block rounded-full py-3.5 text-center font-bold" style={featured ? { background: "var(--color-accent)", color: "var(--color-primary)", marginTop: feats.length ? "1.75rem" : "auto" } : { border: "1.5px solid var(--color-accent)", color: dark ? "var(--color-accent)" : "var(--color-accent)", marginTop: feats.length ? "1.75rem" : "auto" }}>Get started</a>
               </div>
             );
           })}

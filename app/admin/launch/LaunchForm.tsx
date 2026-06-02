@@ -3,9 +3,9 @@ import { useActionState } from "react";
 import { launchAction } from "./actions";
 import { ThemeEditor } from "@/app/admin/ThemeEditor";
 import { Card, SectionTitle, Field } from "@/app/_ui/primitives";
-import type { TenantTheme } from "@/src/tenant/types";
+import type { TenantTheme, Offer } from "@/src/tenant/types";
 
-export function LaunchForm({ presets }: { presets: { name: string; theme: TenantTheme }[] }) {
+export function LaunchForm({ presets, defaultOffers = [] }: { presets: { name: string; theme: TenantTheme }[]; defaultOffers?: Offer[] }) {
   const [state, action, pending] = useActionState(launchAction, {});
 
   return (
@@ -43,29 +43,32 @@ export function LaunchForm({ presets }: { presets: { name: string; theme: Tenant
       <Card>
         <SectionTitle hint="up to 3">Offers</SectionTitle>
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-[var(--radius-lg)] border p-4" style={{ borderColor: "var(--line)" }}>
-              <div className="mb-3 text-sm font-bold" style={{ color: "var(--muted)" }}>Offer {i}</div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Title (H2)">
-                  <input name={`o${i}t`} className="input" placeholder="Exclusive ZIP" />
-                </Field>
-                <Field label="Price">
-                  <input name={`o${i}p`} className="input" placeholder="$1,500/mo" />
-                </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Description">
-                    <input name={`o${i}d`} className="input" placeholder="What this offer is about" />
+          {[1, 2, 3].map((i) => {
+            const d = defaultOffers[i - 1];
+            return (
+              <div key={i} className="rounded-[var(--radius-lg)] border p-4" style={{ borderColor: "var(--line)" }}>
+                <div className="mb-3 text-sm font-bold" style={{ color: "var(--muted)" }}>Offer {i}</div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Title (H2)">
+                    <input name={`o${i}t`} className="input" placeholder="Exclusive ZIP" defaultValue={d?.title ?? ""} />
                   </Field>
-                </div>
-                <div className="sm:col-span-2">
-                  <Field label="What you get" hint="one bullet per line">
-                    <textarea name={`o${i}f`} rows={3} className="input" placeholder={"Exclusive ZIP territory\nDaily lead delivery\nCRM webhooks"} />
+                  <Field label="Price">
+                    <input name={`o${i}p`} className="input" placeholder="$1,500/mo" defaultValue={d?.price ?? ""} />
                   </Field>
+                  <div className="sm:col-span-2">
+                    <Field label="Description">
+                      <input name={`o${i}d`} className="input" placeholder="What this offer is about" defaultValue={d?.description ?? ""} />
+                    </Field>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Field label="What you get" hint="one bullet per line">
+                      <textarea name={`o${i}f`} rows={4} className="input" placeholder={"Exclusive ZIP territory\nDaily lead delivery\nCRM webhooks"} defaultValue={(d?.features ?? []).join("\n")} />
+                    </Field>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
 

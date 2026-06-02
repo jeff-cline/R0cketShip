@@ -34,6 +34,13 @@ export const NAMED_PRESETS: { name: string; theme: TenantTheme }[] = [
   { name: "Slate", theme: THEME_PRESETS[5] },
 ];
 
+/** New white-labels default to roofers.co's offers (the canonical set). Falls back to a generic ZIP offer. */
+export async function defaultOffers(): Promise<Offer[]> {
+  const [r] = await db.select({ offers: tenants.offers }).from(tenants).where(eq(tenants.domain, "roofers.co")).limit(1);
+  if (r?.offers && r.offers.length) return r.offers;
+  return [{ id: 1, title: "Exclusive ZIP Sponsorship", description: "High-intent, targeted data — exclusive by ZIP, delivered to your CRM.", price: "$1,500/mo", features: ["High-intent, targeted data", "Exclusive by ZIP code", "Delivered to your CRM"] }];
+}
+
 export async function createTenant(input: {
   domain: string;
   niche: string;
