@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db } from "../db/client";
 import { opportunities, opportunityNotes } from "../db/schema";
-import { sendViaPool, platformTenantId } from "../email/mailbox";
+import { coreEmail } from "../core-api/client";
 
 export type OpportunityRow = typeof opportunities.$inferSelect;
 export type OpportunityNoteRow = typeof opportunityNotes.$inferSelect;
@@ -21,23 +21,17 @@ function counterpartyOf(actorEmail: string | null | undefined): string {
   return (actorEmail ?? "").toLowerCase() === JEFF ? KRYSTALORE : JEFF;
 }
 
-/** Fire-and-forget partner notification. Never throws into the request path. */
+/** Fire-and-forget partner notification via the Core API. Never throws into the request path. */
 async function notifyCounterparty(actorEmail: string | null | undefined, title: string, action: string): Promise<void> {
   try {
-    const pid = await platformTenantId();
-    if (!pid) return;
     const to = counterpartyOf(actorEmail);
     const who = (actorEmail ?? "A partner").split("@")[0];
-    await sendViaPool(
-      pid,
-      {
-        to,
-        subject: `Opportunity updated: ${title}`,
-        html: `<p><strong>${who}</strong> ${action} on the opportunity <strong>${escapeHtml(title)}</strong>.</p>
+    await coreEmail({
+      to,
+      subject: `Opportunity updated: ${title}`,
+      html: `<p><strong>${who}</strong> ${action} on the opportunity <strong>${escapeHtml(title)}</strong>.</p>
 <p style="color:#61708a">Open the board at <a href="https://worldchangers.ai/opportunities">/opportunities</a> to see the change.</p>`,
-      },
-      "manual",
-    );
+    });
   } catch {
     /* notification is best-effort */
   }
