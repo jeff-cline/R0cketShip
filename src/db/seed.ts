@@ -30,6 +30,28 @@ const godTheme: TenantTheme = {
   fontFamily: "system-ui, sans-serif",
 };
 
+// worldchangers.ai — the joint Krystalore × R0cketShip landing site.
+// Krystalore's brand teal leads; R0cketShip orange is the partner accent.
+const worldChangersTheme: TenantTheme = {
+  primary: "#0d7377", // Krystalore teal
+  secondary: "#0f5257", // deep teal
+  accent: "#ff5b2e", // R0cketShip orange
+  background: "#ffffff",
+  foreground: "#0b2a2c",
+  fontFamily: "system-ui, sans-serif",
+};
+
+// The six THRIVE tiers, in ascending order. Rendered on the lander; also stored
+// on the tenant so the offer data has one source of truth.
+const worldChangersOffers: Offer[] = [
+  { id: 1, title: "TRY", price: "$1,500/mo", description: "Zip predictive data — start seeing who's in-market in your ZIP.", features: ["ZIP predictive data", "Unlimited email support"] },
+  { id: 2, title: "HELP", price: "$3,000/mo", description: "Consulting on top of your data — we help you act on it.", features: ["Everything in TRY", "Business + tech consulting"] },
+  { id: 3, title: "RESPONSE", price: "$7,500/mo", description: "Predictive-data marketing that responds for you.", features: ["Everything in HELP", "Predictive-data marketing"] },
+  { id: 4, title: "INTEGRATE", price: "$15,500/mo", description: "Keyword calls in a ZIP code, integrated into your funnel.", features: ["Everything in RESPONSE", "Keyword calls (ZIP code)"] },
+  { id: 5, title: "VELOCITY", price: "$32,500/mo", description: "Quick-start. Keyword calls up to an entire state, plus immersive in-person live at our location.", features: ["Everything in INTEGRATE", "Keyword calls up to a full state", "Immersive in-person, live at our location"] },
+  { id: 6, title: "EXPLODE", price: "$55,000/mo", description: "The Secret Weapon. Exclusive keyword calls (a new revenue stream) with in-person / onsite live consulting included.", features: ["Everything in VELOCITY", "Secret Weapon", "Exclusive keyword calls (+ new revenue stream)", "In-person / onsite live consulting included"] },
+];
+
 async function seed() {
   await db
     .insert(tenants)
@@ -60,10 +82,23 @@ async function seed() {
         activePaymentProvider: "stripe",
         status: "active",
       },
+      {
+        domain: "worldchangers.ai",
+        ip: "137.220.56.129",
+        niche: "founder growth",
+        moneyWord: "high-intent leads",
+        logoUrl: null,
+        theme: worldChangersTheme,
+        offers: worldChangersOffers,
+        monthlyPriceDefault: "1500",
+        footerHtml: "<p>worldchangers.ai — Krystalore × R0cketShip. People First. Tech-Backed.</p>",
+        activePaymentProvider: "stripe",
+        status: "active",
+      },
     ])
     .onConflictDoNothing({ target: tenants.domain });
 
-  console.log("Seeded roofers.co and r0cketship.com");
+  console.log("Seeded roofers.co, r0cketship.com, worldchangers.ai");
 
   const [platform] = await db.select().from(tenants).where(eq(tenants.domain, "r0cketship.com")).limit(1);
   if (platform) {
@@ -80,6 +115,22 @@ async function seed() {
       console.log("Seeded God account jeff.cline@me.com (temp password, must reset)");
     } else {
       console.log("God account already present");
+    }
+
+    // Krystalore is the joint God partner — she manages Opportunities alongside Jeff.
+    const kExisting = await db.select().from(users).where(eq(users.email, "krystalore@thecrewscoach.com")).limit(1);
+    if (kExisting.length === 0) {
+      await db.insert(users).values({
+        tenantId: platform.id,
+        email: "krystalore@thecrewscoach.com",
+        passwordHash: await hashPassword("TEMP!234"),
+        role: "god",
+        mustResetPassword: true,
+        name: "Krystalore Crews",
+      });
+      console.log("Seeded God account krystalore@thecrewscoach.com (temp password, must reset)");
+    } else {
+      console.log("Krystalore God account already present");
     }
   }
 

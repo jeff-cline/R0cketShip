@@ -141,6 +141,55 @@
       "when": 1780390255825,
       "tag": "0019_acoustic_tomas",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1780407076401,
+      "tag": "0020_phase1_outreach",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1780427625171,
+      "tag": "0021_phase2_advertiser_marketplace",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1780441403868,
+      "tag": "0022_phase2_test_send_cc",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780489707592,
+      "tag": "0023_custom_lead_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780491907871,
+      "tag": "0024_missed_ops_and_offer_box",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1780495070620,
+      "tag": "0025_fluffy_lilandra",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1783445158904,
+      "tag": "0026_opportunities",
+      "breakpoints": true
     }
   ]
 }
