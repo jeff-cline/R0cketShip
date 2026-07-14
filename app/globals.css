@@ -154,3 +154,16 @@ h1, h2, h3, h4 { font-family: var(--font-display), system-ui, sans-serif; letter
 }
 .home-rocket-img { animation: rocket-launch 1.8s ease-in-out infinite; filter: drop-shadow(0 5px 9px rgba(255,91,46,.6)); transition: transform .15s; }
 .home-rocket:hover .home-rocket-img { animation-duration: .5s; transform: scale(1.12); }
+
+/* Hub hero rocket "loop-the-loop" — fired on click before the film opens. */
+@keyframes rocket-loop {
+  0%   { transform: translate(0,0) rotate(0deg); }
+  25%  { transform: translate(38px,-34px) rotate(90deg); }
+  50%  { transform: translate(0,-68px) rotate(180deg); }
+  75%  { transform: translate(-38px,-34px) rotate(270deg); }
+  100% { transform: translate(0,0) rotate(360deg); }
+}
+.rocket-loop { animation: rocket-loop .9s cubic-bezier(.5,.05,.35,1); }
+@media (prefers-reduced-motion: reduce) {
+  .rocket-loop { animation: none; }
+}

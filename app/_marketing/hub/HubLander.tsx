@@ -2,6 +2,7 @@ import type { Tenant } from "@/src/tenant/types";
 import { marketingContent } from "@/src/marketing/content";
 import { INDUSTRIES } from "@/app/corporate-structure/industries";
 import { HubContact } from "./HubContact";
+import { HubHero } from "./HubHero";
 
 // The r0cketship.com (hub) homepage — a bold orange/black statement page.
 // HUB ONLY: rendered exclusively when the tenant domain is r0cketship.com, so no
@@ -62,34 +63,8 @@ export function HubLander({ tenant }: { tenant: Tenant }) {
         </a>
       </nav>
 
-      {/* HERO */}
-      <header className="relative mx-auto max-w-5xl px-5 pb-16 pt-16 text-center sm:px-8 sm:pt-24">
-        <div className="relative mx-auto mb-9 grid h-36 w-36 place-items-center">
-          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, color-mix(in srgb, #ff5b2e 55%, transparent), transparent)", filter: "blur(6px)" }} />
-          <RImg size={104} className="relative drop-shadow-[0_8px_30px_rgba(255,91,46,.5)]" />
-        </div>
-
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold" style={{ background: "color-mix(in srgb, #ff5b2e 26%, transparent)" }}>
-          🔥 The future of what business success looks like
-        </div>
-
-        <h1 className="font-serif-display flame-text mx-auto max-w-4xl text-6xl font-extrabold leading-[1.0] sm:text-8xl">
-          The Future Is Now.
-        </h1>
-
-        <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-white/70 sm:text-xl">
-          <Brand className="font-semibold text-white" /> is a technology-powered, multi-service company platform built to <span className="font-semibold text-white">put people first</span> — leveraging proprietary technology, unique data, and people on fire. 🔥
-        </p>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-white/55">
-          We&apos;re not afraid of AI. We harness it — with the best and the brightest — to build the future we actually want.
-        </p>
-
-        <div className="mt-9 flex flex-col flex-wrap justify-center gap-3 sm:flex-row">
-          <a href="/advertise" className="rounded-full px-7 py-3.5 font-bold text-white transition active:translate-y-px" style={{ background: ACCENT, boxShadow: "0 10px 30px -8px rgba(255,91,46,.6)" }}>Advertise with us</a>
-          <a href="/e-partnership" className="rounded-full border px-7 py-3.5 font-bold text-white transition hover:bg-white/5" style={{ borderColor: "rgba(255,255,255,.28)" }}>Joint venture with us</a>
-          <a href="/niches" className="rounded-full border px-7 py-3.5 font-bold text-white transition hover:bg-white/5" style={{ borderColor: "rgba(255,255,255,.28)" }}>Quick-start with predictive data →</a>
-        </div>
-      </header>
+      {/* HERO — interactive video hero (client component) */}
+      <HubHero />
 
       {/* UBERIZED quote band */}
       <section className="px-5 py-20 text-center sm:px-8" style={{ background: "#000" }}>
