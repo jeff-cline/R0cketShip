@@ -125,3 +125,32 @@ h1, h2, h3, h4 { font-family: var(--font-display), system-ui, sans-serif; letter
     0 0 56px color-mix(in srgb, var(--color-accent) 40%, transparent),
     0 3px 14px rgba(0,0,0,.4);
 }
+
+/* Marquee scrollers (hub lander: testimonials + niches) */
+@keyframes marquee-x { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee { overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent); }
+.marquee-track { display: flex; width: max-content; animation: marquee-x 50s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee-track.fast { animation-duration: 32s; }
+
+/* "On fire" headline: bright white, thick letters with a thick orange ember
+   glow all around — bold and popping on the dark pages. */
+.flame-text {
+  color: #ffffff;
+  -webkit-text-stroke: 0.7px #ffffff;
+  text-shadow:
+    0 0 4px rgba(255,255,255,.6),
+    0 0 13px color-mix(in srgb, #ff6a2e 96%, transparent),
+    0 0 26px color-mix(in srgb, #ff5b2e 90%, transparent),
+    0 0 50px color-mix(in srgb, #ff5b2e 74%, transparent),
+    0 0 88px color-mix(in srgb, #ff5b2e 54%, transparent);
+}
+
+/* Small launching rocket that links home, fixed in a corner of dark pages. */
+@keyframes rocket-launch {
+  0%   { transform: translateY(0) rotate(0deg); }
+  50%  { transform: translateY(-5px) rotate(-4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+.home-rocket-img { animation: rocket-launch 1.8s ease-in-out infinite; filter: drop-shadow(0 5px 9px rgba(255,91,46,.6)); transition: transform .15s; }
+.home-rocket:hover .home-rocket-img { animation-duration: .5s; transform: scale(1.12); }

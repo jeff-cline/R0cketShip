@@ -7,6 +7,8 @@ export function MarketingNav({ brand, dark = false, hub = false }: { brand: stri
     { href: "/integrations", label: "Integrations" },
     // "Niches" is the directory of all white-labels — only the r0cketship.com hub shows it.
     ...(hub ? [{ href: "/niches", label: "Niches" }] : []),
+    // Advertise is r0cketship-level — always points to the hub /advertise page.
+    { href: "https://r0cketship.com/advertise", label: "Advertise" },
     { href: "/login", label: "Sign in" },
   ];
   return (

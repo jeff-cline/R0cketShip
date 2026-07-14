@@ -1,0 +1,1 @@
+ALTER TABLE "tenant_integrations" ADD COLUMN "marketplace_cc_founder_email" text DEFAULT 'jeff.cline@me.com' NOT NULL;

@@ -16,9 +16,9 @@ function titleCase(s: string): string {
 
 export function generateMetadata(): Metadata {
   return {
-    title: "Lead Networks by Niche — R0cketShip",
+    title: "Predictive Data Networks by Niche — R0cketShip",
     description:
-      "Browse R0cketShip's white-label lead networks — predictive, ZIP-exclusive leads for roofing, solar, and more.",
+      "Browse R0cketShip's white-label predictive-data networks — ZIP-exclusive predictive intent for roofing, solar, and more.",
     robots: { index: true, follow: true },
   };
 }
@@ -53,10 +53,10 @@ export default async function NichesPage() {
           className="mt-3 text-4xl font-extrabold sm:text-5xl"
           style={{ color: "var(--ink)" }}
         >
-          Lead networks for every niche
+          Predictive Data networks for every niche
         </h1>
         <p className="mt-4 text-lg" style={{ color: "var(--muted)" }}>
-          Predictive, ZIP-exclusive leads — pick your industry.
+          ZIP-exclusive predictive data — pick your industry.
         </p>
       </header>
 
@@ -90,11 +90,11 @@ export default async function NichesPage() {
                     {titleCase(t.niche)}
                   </div>
                   <h2 className="mt-2 text-xl font-extrabold" style={{ color: "var(--ink)" }}>
-                    {titleCase(t.niche)} Leads
+                    {titleCase(t.niche)} Predictive Data
                   </h2>
                   <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-                    Exclusive {t.niche} leads in your ZIP — predictive intent,
-                    delivered to your CRM.
+                    Exclusive {t.niche} predictive data in your ZIP — predictive
+                    intent, delivered to your CRM.
                   </p>
                   <div
                     className="mt-4 text-sm font-semibold"

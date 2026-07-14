@@ -1,7 +1,10 @@
 import { createHash } from "crypto";
 import type { NormalizeResult } from "./types";
 
-const KNOWN = new Set([
+/** Canonical column names the row-normalizer understands. Exported so the
+ *  /api/admin/import/preview route can check whether a user's CSV headers
+ *  actually match anything before committing the upload. */
+export const KNOWN_COLUMNS: readonly string[] = [
   "sha256_lc_hem", "first_name", "last_name", "business_email", "personal_phone",
   "mobile_phone", "linkedin_url", "personal_address", "personal_state", "personal_city",
   "personal_zip", "personal_zip4", "gender", "age_range", "income_range", "net_worth",
@@ -9,7 +12,9 @@ const KNOWN = new Set([
   "company_employee_count", "company_linkedin_url", "company_state",
   "business_email_validation_status", "personal_emails", "additional_personal_emails",
   "contact_country", "score_category", "last_updated",
-]);
+] as const;
+
+const KNOWN = new Set<string>(KNOWN_COLUMNS);
 
 function nn(v: string | undefined): string | null {
   const t = (v ?? "").trim();
