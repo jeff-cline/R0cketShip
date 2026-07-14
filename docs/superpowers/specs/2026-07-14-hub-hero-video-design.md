@@ -38,7 +38,27 @@
 ### CTA source of truth
 The 3 CTAs (`Advertise with us` → `/advertise`, `Joint venture with us` → `/e-partnership`, `Quick-start with predictive data →` → `/niches`) are defined **once** as an array in `HubHero` and rendered in both the resting hero and the overlay, so styling/links never drift.
 
-## Video storage — via the core upload API (not committed to git)
+## Video source — hosted on YouTube (current approach)
+The film is hosted on YouTube (`https://youtu.be/IDe0jhB00Jw`, "Predictive Data by
+R0cketship") and embedded — no file stored by us at all (no git, no server disk, no
+30MB cap, up to 1080p adaptive, zero bandwidth cost).
+
+- `HubHero` resolves its source from `tenant.heroVideo`, falling back to a built-in
+  `DEFAULT_FILM` (the YouTube URL) so the hub works out of the box. `heroVideo` may
+  hold **either** a YouTube URL **or** an uploaded file path.
+- `youTubeId()` detects a YouTube URL → the overlay renders `YouTubePlayer`
+  (`app/_marketing/hub/YouTubePlayer.tsx`, the YouTube IFrame Player API). A
+  non-YouTube URL falls back to a native `<video>` element (so the upload path below
+  still works).
+- **Autoplay with sound:** the IFrame API script is preloaded on mount so the player
+  is created inside the click gesture; `onReady` calls `unMute()` + `playVideo()`.
+- **End finale:** `onStateChange` with `e.data === 0` (ENDED) triggers the CTA rise.
+  A dark cover is drawn over the player on end so YouTube's related-video end screen
+  doesn't show behind the finale.
+- To change the film: paste a new YouTube URL (or upload a file) in `/admin/branding`
+  → Hero video. No code change or redeploy needed.
+
+## (Alternative) Video storage — via the core upload API (not committed to git)
 The film is **not** committed to the repo. It is stored through the platform's
 existing upload API and referenced from the tenant record:
 

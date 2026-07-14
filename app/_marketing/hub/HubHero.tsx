@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { YouTubePlayer, preloadYouTubeApi } from "./YouTubePlayer";
 
 // Interactive hero for the r0cketship.com hub. The marketing video's first
 // frame is the dark backdrop; clicking the rocket or the play button loops the
@@ -10,6 +11,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const ACCENT = "#ff5b2e";
 const POSTER_SRC = "/hub-video-poster.jpg";
+
+// The hub's marketing film, hosted on YouTube. Used when the tenant hasn't set a
+// custom heroVideo. heroVideo may hold a YouTube URL or an uploaded /uploads file.
+const DEFAULT_FILM = "https://youtu.be/IDe0jhB00Jw";
+
+/** Extract an 11-char YouTube video id from a watch/short/embed/youtu.be URL. */
+function youTubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([A-Za-z0-9_-]{11})/,
+  );
+  return m ? m[1] : null;
+}
 
 /** Canonical R0cketShip rocket-ship image. */
 function RImg({ size = 16, className = "" }: { size?: number; className?: string }) {
@@ -52,7 +66,10 @@ export function HubHero({ videoSrc, posterSrc = POSTER_SRC }: { videoSrc?: strin
   const [ended, setEnded] = useState(false); // video finished → CTAs rise to center
   const [looping, setLooping] = useState(false); // hero rocket loop-the-loop
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasVideo = Boolean(videoSrc);
+  const src = videoSrc || DEFAULT_FILM;
+  const ytId = youTubeId(src);
+  const hasVideo = Boolean(src);
+  const handleEnded = useCallback(() => setEnded(true), []);
 
   const openPlayer = useCallback(() => {
     if (open || !hasVideo) return;
@@ -107,6 +124,12 @@ export function HubHero({ videoSrc, posterSrc = POSTER_SRC }: { videoSrc?: strin
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, closePlayer]);
+
+  // Preload the YouTube API on mount so the player can start (with sound) inside
+  // the click gesture rather than after an async script load.
+  useEffect(() => {
+    if (ytId) preloadYouTubeApi();
+  }, [ytId]);
 
   return (
     <header className="relative overflow-hidden">
@@ -184,16 +207,29 @@ export function HubHero({ videoSrc, posterSrc = POSTER_SRC }: { videoSrc?: strin
           className="fixed inset-0 z-[100] flex items-center justify-center transition-opacity duration-700"
           style={{ background: "#000", opacity: shown ? 1 : 0 }}
         >
-          <video
-            ref={videoRef}
-            src={videoSrc ?? undefined}
-            poster={posterSrc}
-            playsInline
-            controls
-            onEnded={() => setEnded(true)}
-            className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
-            style={{ opacity: shown ? 1 : 0 }}
-          />
+          {ytId ? (
+            <YouTubePlayer
+              videoId={ytId}
+              onEnded={handleEnded}
+              className="absolute inset-0 h-full w-full transition-opacity duration-700"
+              style={{ opacity: shown ? 1 : 0 }}
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={src}
+              poster={posterSrc}
+              playsInline
+              controls
+              onEnded={handleEnded}
+              className="absolute inset-0 h-full w-full object-contain transition-opacity duration-700"
+              style={{ opacity: shown ? 1 : 0 }}
+            />
+          )}
+
+          {/* When the film ends, cover the player (incl. YouTube's related-video
+              end screen) with a dark layer so the CTA finale reads cleanly. */}
+          {ended && <div className="absolute inset-0 z-[5]" style={{ background: "rgba(6,8,13,.92)" }} />}
 
           {/* Close */}
           <button
