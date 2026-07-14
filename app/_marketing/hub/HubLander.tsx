@@ -63,8 +63,10 @@ export function HubLander({ tenant }: { tenant: Tenant }) {
         </a>
       </nav>
 
-      {/* HERO — interactive video hero (client component) */}
-      <HubHero />
+      {/* HERO — interactive video hero (client component).
+          The film is the tenant's heroVideo, uploaded via /admin/branding and
+          stored by the core upload API (public/uploads, out of git). */}
+      <HubHero videoSrc={c.heroVideo} />
 
       {/* UBERIZED quote band */}
       <section className="px-5 py-20 text-center sm:px-8" style={{ background: "#000" }}>

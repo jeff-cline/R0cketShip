@@ -9,7 +9,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // HUB ONLY — rendered from HubLander, which only mounts on r0cketship.com.
 
 const ACCENT = "#ff5b2e";
-const VIDEO_SRC = "/hub-video.mp4";
 const POSTER_SRC = "/hub-video-poster.jpg";
 
 /** Canonical R0cketShip rocket-ship image. */
@@ -47,15 +46,16 @@ function CtaButton({ cta, size = "base" }: { cta: (typeof CTAS)[number]; size?: 
   );
 }
 
-export function HubHero() {
+export function HubHero({ videoSrc, posterSrc = POSTER_SRC }: { videoSrc?: string | null; posterSrc?: string }) {
   const [open, setOpen] = useState(false); // overlay mounted / playing
   const [shown, setShown] = useState(false); // drives the fade-to-black + video reveal
   const [ended, setEnded] = useState(false); // video finished → CTAs rise to center
   const [looping, setLooping] = useState(false); // hero rocket loop-the-loop
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasVideo = Boolean(videoSrc);
 
   const openPlayer = useCallback(() => {
-    if (open) return;
+    if (open || !hasVideo) return;
     // Rocket loop-the-loop flourish (CSS handles reduced-motion).
     setLooping(true);
     window.setTimeout(() => setLooping(false), 950);
@@ -69,7 +69,7 @@ export function HubHero() {
       v.muted = true;
       void v.play().catch(() => {});
     }
-  }, [open]);
+  }, [open, hasVideo]);
 
   const closePlayer = useCallback(() => {
     const v = videoRef.current;
@@ -113,36 +113,45 @@ export function HubHero() {
       {/* Video-poster backdrop — the dark "black background" the hero sits on. */}
       <div className="absolute inset-0 z-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={POSTER_SRC} alt="" aria-hidden className="h-full w-full object-cover" />
+        <img src={posterSrc} alt="" aria-hidden className="h-full w-full object-cover" />
         <div className="absolute inset-0" style={{ background: "radial-gradient(120% 70% at 80% -8%, rgba(26,19,34,.55), rgba(6,8,13,.86) 60%), rgba(6,8,13,.7)" }} />
       </div>
 
       {/* Hero content — sits on top of the video backdrop. */}
       <div className="relative z-10 mx-auto max-w-5xl px-5 pb-16 pt-16 text-center sm:px-8 sm:pt-24">
-        {/* Rocket (clickable) */}
-        <button
-          type="button"
-          onClick={openPlayer}
-          aria-label="Play the R0cketShip film"
-          className="group relative mx-auto mb-4 grid h-36 w-36 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-        >
-          <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, color-mix(in srgb, #ff5b2e 55%, transparent), transparent)", filter: "blur(6px)" }} />
-          <RImg size={104} className={`relative drop-shadow-[0_8px_30px_rgba(255,91,46,.5)] transition-transform group-hover:scale-105 ${looping ? "rocket-loop" : ""}`} />
-        </button>
+        {/* Rocket — clickable only when a film is set (via Site branding upload) */}
+        {hasVideo ? (
+          <button
+            type="button"
+            onClick={openPlayer}
+            aria-label="Play the R0cketShip film"
+            className="group relative mx-auto mb-4 grid h-36 w-36 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, color-mix(in srgb, #ff5b2e 55%, transparent), transparent)", filter: "blur(6px)" }} />
+            <RImg size={104} className={`relative drop-shadow-[0_8px_30px_rgba(255,91,46,.5)] transition-transform group-hover:scale-105 ${looping ? "rocket-loop" : ""}`} />
+          </button>
+        ) : (
+          <div className="relative mx-auto mb-9 grid h-36 w-36 place-items-center">
+            <div className="absolute inset-0 rounded-full" style={{ background: "radial-gradient(closest-side, color-mix(in srgb, #ff5b2e 55%, transparent), transparent)", filter: "blur(6px)" }} />
+            <RImg size={104} className="relative drop-shadow-[0_8px_30px_rgba(255,91,46,.5)]" />
+          </div>
+        )}
 
-        {/* Play button — directly under the rocket logo */}
-        <button
-          type="button"
-          onClick={openPlayer}
-          aria-label="Play video"
-          className="mx-auto mb-8 flex items-center gap-2.5 rounded-full border px-5 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:scale-105 active:translate-y-px"
-          style={{ borderColor: "rgba(255,255,255,.3)", background: "rgba(0,0,0,.35)" }}
-        >
-          <span className="grid h-7 w-7 place-items-center rounded-full" style={{ background: ACCENT }}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 1.5v9l8-4.5-8-4.5z" fill="#0a0e17" /></svg>
-          </span>
-          Watch the film
-        </button>
+        {/* Play button — directly under the rocket logo (only when a film is set) */}
+        {hasVideo && (
+          <button
+            type="button"
+            onClick={openPlayer}
+            aria-label="Play video"
+            className="mx-auto mb-8 flex items-center gap-2.5 rounded-full border px-5 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:scale-105 active:translate-y-px"
+            style={{ borderColor: "rgba(255,255,255,.3)", background: "rgba(0,0,0,.35)" }}
+          >
+            <span className="grid h-7 w-7 place-items-center rounded-full" style={{ background: ACCENT }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden><path d="M2 1.5v9l8-4.5-8-4.5z" fill="#0a0e17" /></svg>
+            </span>
+            Watch the film
+          </button>
+        )}
 
         <div className="mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold" style={{ background: "color-mix(in srgb, #ff5b2e 26%, transparent)" }}>
           🔥 The future of what business success looks like
@@ -177,8 +186,8 @@ export function HubHero() {
         >
           <video
             ref={videoRef}
-            src={VIDEO_SRC}
-            poster={POSTER_SRC}
+            src={videoSrc ?? undefined}
+            poster={posterSrc}
             playsInline
             controls
             onEnded={() => setEnded(true)}

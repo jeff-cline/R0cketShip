@@ -38,13 +38,29 @@
 ### CTA source of truth
 The 3 CTAs (`Advertise with us` → `/advertise`, `Joint venture with us` → `/e-partnership`, `Quick-start with predictive data →` → `/niches`) are defined **once** as an array in `HubHero` and rendered in both the resting hero and the overlay, so styling/links never drift.
 
-## Assets
-- `public/hub-video.mp4` — web-optimized re-encode of the source. Committed to git (must stay < GitHub's 100MB per-file limit).
-- `public/hub-video-poster.jpg` — the video's first frame, used as the `poster` and the resting-state backdrop.
-- **Full-res master:** the original 144MB `predictive-data-marketing-jeff-cline-r0cketship.mp4` stays in `~/Downloads` untouched.
+## Video storage — via the core upload API (not committed to git)
+The film is **not** committed to the repo. It is stored through the platform's
+existing upload API and referenced from the tenant record:
 
-### Encoding note (constraint discovered during build)
-The source is already 720p at ~2.9 Mbps (144MB / 6.5 min). macOS `avconvert` (the only no-install transcoder available) has **no custom-bitrate control** — its 720p preset re-encodes at ~the same bitrate (stayed 143MB), which is over GitHub's 100MB limit. Its only size lever is resolution, so the committed web version is encoded at **540p** to stay committable. 540p is sharp enough in the immersive player; the full-res 720p master is preserved. If crisper 720p is wanted on-site later, the path is ffmpeg (proper 720p at a lower target bitrate) or a CDN/object-store host outside git.
+- `HubHero` renders `tenant.heroVideo` (surfaced by `marketingContent`). When it's
+  empty the hero degrades gracefully — poster backdrop, static rocket, no play
+  button, no overlay.
+- The video is uploaded through **`/admin/branding`** (Site branding) → `UploadField`
+  → `POST /api/upload`, which writes to `public/uploads/<tenantId>/<hash>.mp4`
+  (**`public/uploads/` is gitignored**) and saves the returned `/uploads/...` URL
+  into the tenant's `heroVideo` field. So the binary lives on the server's disk,
+  never in git.
+- **`/api/upload` caps files at 30MB**, so the film is encoded to **~26MB** (540p,
+  2-pass H.264, faststart) to fit that cap unchanged. The upload-ready file is at
+  `~/Downloads/r0cketship-hero-video-web.mp4`. The 144MB master stays in `~/Downloads`.
+- `public/hub-video-poster.jpg` (46KB, the first frame) **stays committed** as the
+  static hero backdrop / `poster` — small enough that git is not a concern.
+
+### Encoding note
+The source is already 720p at ~2.9 Mbps (144MB / 6.5 min). macOS `avconvert` has
+no custom-bitrate control (its presets re-encode at ~the same or larger size), so a
+static **ffmpeg** (fetched to the scratchpad) is used for 2-pass H.264 at a target
+bitrate. To fit the 30MB upload cap at 6.5 min, the encode is 540p.
 
 ## Accessibility
 - Play button has `aria-label`. Overlay uses `role="dialog"` + `aria-modal="true"`.
