@@ -5,7 +5,7 @@ import type { NoteView, PageView, Priority, UserRow } from "@/src/yellow/data";
 import { YellowSheet, BlackBand, PRIORITY_COLORS, MARGIN_X, LINE_H } from "./ui";
 import {
   createNoteAction, toggleDoneAction, setPriorityAction, editNoteAction, deleteNoteAction,
-  reorderNotesAction, addSubnoteAction, createPageAction, renamePageAction,
+  reorderNotesAction, addSubnoteAction, setContactAction, createPageAction, renamePageAction,
   logoutAction, impersonateAction, exitImpersonationAction, createUserAction,
 } from "./actions";
 
@@ -51,7 +51,8 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
     const t = text.trim(); if (!t || !page) return;
     const tmp: NoteView = {
       id: `tmp_${Math.random().toString(36).slice(2)}`, text: t, priority, done: false,
-      position: page.notes.length, completedAt: null, createdAt: new Date().toISOString(), subnotes: [],
+      position: page.notes.length, completedAt: null, createdAt: new Date().toISOString(),
+      contactName: null, contactEmail: null, contactPhone: null, subnotes: [],
     };
     patchPage(page.id, (p) => ({ ...p, notes: [...p.notes, tmp] }));
     createNoteAction(page.id, t, priority).catch(() => {});
@@ -72,6 +73,10 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
   function saveEdit(n: NoteView, text: string) {
     patchNote(page.id, n.id, (x) => ({ ...x, text }));
     editNoteAction(n.id, text).catch(() => {});
+  }
+  function saveContact(noteId: string, name: string, email: string, phone: string) {
+    patchNote(page.id, noteId, (x) => ({ ...x, contactName: name.trim() || null, contactEmail: email.trim() || null, contactPhone: phone.trim() || null }));
+    setContactAction(noteId, name, email, phone).catch(() => {});
   }
   function addSub(noteId: string, text: string) {
     const t = text.trim(); if (!t) return;
@@ -194,6 +199,7 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
               <button onClick={() => setModalId(n.id)}
                 style={{ flex: 1, textAlign: "left", background: "none", border: 0, cursor: "pointer", padding: 0,
                   fontSize: 16, color: "#1a1a1a", fontFamily: "'Segoe Print','Bradley Hand',cursive,system-ui",
+                  fontWeight: n.priority === "high" ? 800 : 400,
                   textDecoration: n.done ? "line-through" : "none", textDecorationColor: "#c0392b", opacity: n.done ? 0.55 : 1 }}>
                 {n.text}
                 {n.subnotes.length > 0 && <span style={{ fontSize: 11, color: "#7a6f2a", marginLeft: 8 }}>💬 {n.subnotes.length}</span>}
@@ -208,7 +214,8 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
 
       {modalNote && (
         <NoteModal note={modalNote} onClose={() => setModalId(null)} onAddSub={(t) => addSub(modalNote.id, t)}
-          onSaveText={(t) => saveEdit(modalNote, t)} />
+          onSaveText={(t) => saveEdit(modalNote, t)}
+          onSaveContact={(name, email, phone) => saveContact(modalNote.id, name, email, phone)} />
       )}
       {adminOpen && isAdmin && <AdminPanel users={users} onClose={() => setAdminOpen(false)}
         onImpersonate={(id) => identity(() => impersonateAction(id))} />}
@@ -239,23 +246,46 @@ function AddBar({ onAdd }: { onAdd: (text: string, p: Priority) => void }) {
   );
 }
 
-function NoteModal({ note, onClose, onAddSub, onSaveText }: {
+function NoteModal({ note, onClose, onAddSub, onSaveText, onSaveContact }: {
   note: NoteView; onClose: () => void; onAddSub: (t: string) => void; onSaveText: (t: string) => void;
+  onSaveContact: (name: string, email: string, phone: string) => void;
 }) {
   const [sub, setSub] = useState("");
   const [text, setText] = useState(note.text);
+  const [cName, setCName] = useState(note.contactName ?? "");
+  const [cEmail, setCEmail] = useState(note.contactEmail ?? "");
+  const [cPhone, setCPhone] = useState(note.contactPhone ?? "");
+  const saveContact = () => onSaveContact(cName, cEmail, cPhone);
+  const telDigits = cPhone.replace(/[^\d+]/g, "");
+
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.55)", display: "grid", placeItems: "center", zIndex: 100, padding: 18 }}>
-      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 520, background: "#fffbe0",
-        borderRadius: 12, boxShadow: "0 30px 80px rgba(0,0,0,.5)", overflow: "hidden" }}>
-        <div style={{ background: "#141414", color: "#fff", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 520, maxHeight: "92vh", overflowY: "auto", background: "#fffbe0",
+        borderRadius: 12, boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}>
+        <div style={{ position: "sticky", top: 0, background: "#141414", color: "#fff", padding: "12px 18px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <b style={{ fontSize: 14 }}>Note</b>
           <button onClick={onClose} style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}>✕</button>
         </div>
         <div style={{ padding: 18 }}>
           <textarea value={text} onChange={(e) => setText(e.target.value)} onBlur={() => text.trim() && text !== note.text && onSaveText(text.trim())}
             rows={2} style={{ width: "100%", fontSize: 16, border: "1px solid #e2d98a", borderRadius: 8, padding: 10, background: "#fffef5", color: "#1a1a1a", resize: "vertical", boxSizing: "border-box" }} />
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "#8a7f42", margin: "16px 0 6px" }}>Notes</div>
+
+          {/* Contact */}
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "#8a7f42", margin: "16px 0 6px" }}>Contact</div>
+          <div style={{ display: "grid", gap: 7 }}>
+            <input value={cName} onChange={(e) => setCName(e.target.value)} onBlur={saveContact} placeholder="Name" style={ci} />
+            <input value={cEmail} onChange={(e) => setCEmail(e.target.value)} onBlur={saveContact} placeholder="Email" type="email" style={ci} />
+            <input value={cPhone} onChange={(e) => setCPhone(e.target.value)} onBlur={saveContact} placeholder="Phone" type="tel" style={ci} />
+          </div>
+          {(telDigits || cEmail.trim()) && (
+            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+              {telDigits && <a href={`tel:${telDigits}`} style={actBtn("#0b8a3c")}>📞 Call</a>}
+              {telDigits && <a href={`sms:${telDigits}`} style={actBtn("#1457e6")}>💬 Text</a>}
+              {cEmail.trim() && <a href={`mailto:${cEmail.trim()}`} style={actBtn("#c0392b")}>✉️ Email</a>}
+            </div>
+          )}
+
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, color: "#8a7f42", margin: "18px 0 6px" }}>Notes</div>
           <div style={{ display: "grid", gap: 6, maxHeight: 240, overflowY: "auto" }}>
             {note.subnotes.length === 0 && <div style={{ fontSize: 13, color: "#9a8f52" }}>No notes yet.</div>}
             {note.subnotes.map((s) => (
@@ -328,3 +358,5 @@ const tab: CSSProperties = { background: "rgba(0,0,0,.05)", border: "1px solid r
 const tabActive: CSSProperties = { background: "#111", color: "#ffe94d", borderColor: "#111" };
 const pill = (on: boolean): CSSProperties => ({ border: "1px solid #cbbf5a", background: on ? "#111" : "#fffdf0", color: on ? "#ffe94d" : "#4a4632", borderRadius: 999, padding: "5px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" });
 const ai: CSSProperties = { border: "1px solid #e2d98a", borderRadius: 8, padding: "9px 11px", fontSize: 14, background: "#fffef5", color: "#1a1a1a", outline: "none" };
+const ci: CSSProperties = { border: "1px solid #e2d98a", borderRadius: 8, padding: "8px 11px", fontSize: 14, background: "#fffef5", color: "#1a1a1a", outline: "none", width: "100%", boxSizing: "border-box" };
+const actBtn = (bg: string): CSSProperties => ({ display: "inline-flex", alignItems: "center", gap: 5, background: bg, color: "#fff", textDecoration: "none", borderRadius: 999, padding: "8px 15px", fontWeight: 700, fontSize: 13.5, cursor: "pointer" });

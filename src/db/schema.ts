@@ -1383,6 +1383,9 @@ export const yellowNotes = pgTable("yellow_notes", {
   priority: yellowPriority("priority").notNull().default("medium"),
   done: boolean("done").notNull().default(false),
   position: integer("position").notNull().default(0),
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

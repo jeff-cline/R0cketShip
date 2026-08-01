@@ -197,6 +197,13 @@
       "when": 1785595985164,
       "tag": "0027_safe_killer_shrike",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1785599829927,
+      "tag": "0028_thick_purple_man",
+      "breakpoints": true
     }
   ]
 }

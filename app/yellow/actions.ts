@@ -141,6 +141,17 @@ export async function reorderNotesAction(pageId: string, orderedIds: string[]): 
   RP();
 }
 
+export async function setContactAction(noteId: string, name: string, email: string, phone: string): Promise<void> {
+  const auth = await getYellowAuth(); if (!auth) return;
+  if (!(await ownedNote(noteId, auth.user.id))) return;
+  await db.update(yellowNotes).set({
+    contactName: name.trim() || null,
+    contactEmail: email.trim() || null,
+    contactPhone: phone.trim() || null,
+  }).where(eq(yellowNotes.id, noteId));
+  RP();
+}
+
 export async function addSubnoteAction(noteId: string, text: string): Promise<void> {
   const auth = await getYellowAuth(); if (!auth) return;
   if (!(await ownedNote(noteId, auth.user.id))) return;
