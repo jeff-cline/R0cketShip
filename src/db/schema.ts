@@ -1339,3 +1339,57 @@ export const crewTicketOrders = pgTable(
   },
   (t) => [index("crew_ticket_orders_ticket_idx").on(t.ticketId, t.createdAt)],
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// YELLOW PAD — standalone personal task organizer at /yellow. Fully isolated from
+// the tenant/role platform: its own users + sessions. Adding these tables touches
+// no existing table.
+
+export const yellowPriority = pgEnum("yellow_priority", ["high", "medium", "low"]);
+
+export const yellowUsers = pgTable("yellow_users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  mustReset: boolean("must_reset").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  status: userStatus("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const yellowSessions = pgTable("yellow_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => yellowUsers.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  impersonatorUserId: uuid("impersonator_user_id"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const yellowPages = pgTable("yellow_pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => yellowUsers.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default("To-Do"),
+  position: integer("position").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const yellowNotes = pgTable("yellow_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  pageId: uuid("page_id").notNull().references(() => yellowPages.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  priority: yellowPriority("priority").notNull().default("medium"),
+  done: boolean("done").notNull().default(false),
+  position: integer("position").notNull().default(0),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const yellowSubnotes = pgTable("yellow_subnotes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  noteId: uuid("note_id").notNull().references(() => yellowNotes.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
