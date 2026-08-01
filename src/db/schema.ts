@@ -1386,6 +1386,7 @@ export const yellowNotes = pgTable("yellow_notes", {
   contactName: text("contact_name"),
   contactEmail: text("contact_email"),
   contactPhone: text("contact_phone"),
+  photoUrl: text("photo_url"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

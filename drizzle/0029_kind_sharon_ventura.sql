@@ -1,0 +1,1 @@
+ALTER TABLE "yellow_notes" ADD COLUMN "photo_url" text;

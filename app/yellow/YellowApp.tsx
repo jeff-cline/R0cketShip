@@ -32,6 +32,7 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
   const [modalId, setModalId] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const page = pages[Math.min(pageIdx, Math.max(0, pages.length - 1))];
   if (!page) return <div style={{ minHeight: "100vh", background: "#111" }} />;
@@ -52,7 +53,7 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
     const tmp: NoteView = {
       id: `tmp_${Math.random().toString(36).slice(2)}`, text: t, priority, done: false,
       position: page.notes.length, completedAt: null, createdAt: new Date().toISOString(),
-      contactName: null, contactEmail: null, contactPhone: null, subnotes: [],
+      contactName: null, contactEmail: null, contactPhone: null, photoUrl: null, subnotes: [],
     };
     patchPage(page.id, (p) => ({ ...p, notes: [...p.notes, tmp] }));
     createNoteAction(page.id, t, priority).catch(() => {});
@@ -77,6 +78,31 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
   function saveContact(noteId: string, name: string, email: string, phone: string) {
     patchNote(page.id, noteId, (x) => ({ ...x, contactName: name.trim() || null, contactEmail: email.trim() || null, contactPhone: phone.trim() || null }));
     setContactAction(noteId, name, email, phone).catch(() => {});
+  }
+  async function uploadPhoto(file: File) {
+    if (!file || uploading) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("pageId", page.id);
+    try {
+      const res = await fetch("/api/yellow/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (res.ok && data.note) {
+        const tmp: NoteView = {
+          id: data.note.id, text: "📷 Page photo", priority: "medium", done: false,
+          position: page.notes.length, completedAt: null, createdAt: data.note.createdAt || new Date().toISOString(),
+          contactName: null, contactEmail: null, contactPhone: null, photoUrl: data.note.url, subnotes: [],
+        };
+        patchPage(page.id, (p) => ({ ...p, notes: [...p.notes, tmp] }));
+        setModalId(data.note.id);
+      } else {
+        alert(data.error || "Upload failed");
+      }
+    } catch {
+      alert("Upload failed");
+    }
+    setUploading(false);
   }
   function addSub(noteId: string, text: string) {
     const t = text.trim(); if (!t) return;
@@ -137,10 +163,15 @@ export function YellowApp({ me, impersonating, isAdmin, pages: initialPages, use
 
       <YellowSheet>
         <BlackBand right={me.name}>
-          <div style={{ display: "flex", gap: 8, marginLeft: 6 }}>
+          <div style={{ display: "flex", gap: 8, marginLeft: 6, alignItems: "center" }}>
             {isAdmin && (
               <button onClick={() => setAdminOpen((v) => !v)} style={bandBtn}>Users</button>
             )}
+            <label style={{ ...uploadBtn, opacity: uploading ? 0.6 : 1 }} title="Upload a photo of a page">
+              {uploading ? "Uploading…" : "📷 Upload"}
+              <input type="file" accept="image/*" style={{ display: "none" }} disabled={uploading}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadPhoto(f); e.currentTarget.value = ""; }} />
+            </label>
             <button onClick={() => identity(logoutAction)} style={bandBtn}>Sign out</button>
           </div>
         </BlackBand>
@@ -267,6 +298,12 @@ function NoteModal({ note, onClose, onAddSub, onSaveText, onSaveContact }: {
           <button onClick={onClose} style={{ background: "none", border: 0, color: "#fff", fontSize: 18, cursor: "pointer" }}>✕</button>
         </div>
         <div style={{ padding: 18 }}>
+          {note.photoUrl && (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <a href={note.photoUrl} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 14 }} title="Open full size">
+              <img src={note.photoUrl} alt="Uploaded page" style={{ width: "100%", borderRadius: 8, border: "1px solid #e2d98a", cursor: "zoom-in" }} />
+            </a>
+          )}
           <textarea value={text} onChange={(e) => setText(e.target.value)} onBlur={() => text.trim() && text !== note.text && onSaveText(text.trim())}
             rows={2} style={{ width: "100%", fontSize: 16, border: "1px solid #e2d98a", borderRadius: 8, padding: 10, background: "#fffef5", color: "#1a1a1a", resize: "vertical", boxSizing: "border-box" }} />
 
@@ -354,6 +391,7 @@ function AdminPanel({ users, onClose, onImpersonate }: {
 
 // styles
 const bandBtn: CSSProperties = { background: "rgba(255,255,255,.12)", color: "#fff", border: 0, borderRadius: 999, padding: "5px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" };
+const uploadBtn: CSSProperties = { display: "inline-flex", alignItems: "center", background: "#ffe94d", color: "#111", border: 0, borderRadius: 999, padding: "6px 13px", fontSize: 12.5, fontWeight: 800, cursor: "pointer" };
 const tab: CSSProperties = { background: "rgba(0,0,0,.05)", border: "1px solid rgba(0,0,0,.12)", borderRadius: "8px 8px 0 0", padding: "6px 14px", fontSize: 13, fontWeight: 700, color: "#4a4632", cursor: "pointer" };
 const tabActive: CSSProperties = { background: "#111", color: "#ffe94d", borderColor: "#111" };
 const pill = (on: boolean): CSSProperties => ({ border: "1px solid #cbbf5a", background: on ? "#111" : "#fffdf0", color: on ? "#ffe94d" : "#4a4632", borderRadius: 999, padding: "5px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer" });

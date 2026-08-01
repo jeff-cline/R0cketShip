@@ -9,6 +9,7 @@ export type NoteView = {
   id: string; text: string; priority: Priority; done: boolean;
   position: number; completedAt: string | null; createdAt: string;
   contactName: string | null; contactEmail: string | null; contactPhone: string | null;
+  photoUrl: string | null;
   subnotes: SubnoteView[];
 };
 export type PageView = { id: string; title: string; position: number; notes: NoteView[] };
@@ -61,6 +62,7 @@ export async function loadPages(userId: string): Promise<PageView[]> {
       contactName: n.contactName ?? null,
       contactEmail: n.contactEmail ?? null,
       contactPhone: n.contactPhone ?? null,
+      photoUrl: n.photoUrl ?? null,
       completedAt: n.completedAt ? n.completedAt.toISOString() : null,
       createdAt: n.createdAt.toISOString(),
       subnotes: (subsByNote.get(n.id) ?? []).map((s) => ({
