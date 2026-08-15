@@ -14,13 +14,16 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   AUDIENCES, LENSES, STACK, STACK_BANDS, AGENT_TREE, MATURITY, MOAT,
   ECON_LEVERS, ESTIMATE_DEMO, ONE_WORLD, POSITIONING, COMPETITIVE, WHITE_SPACE,
-  FLYWHEEL, EXEC_SUMMARY, ONE_SHEET, DECK, SIZZLE, CLOSING_LINE, COMPUTE,
+  FLYWHEEL, EXEC_SUMMARY, ONE_SHEET, DECK, SIZZLE, CLOSING_LINE, COMPUTE, BUSINESS,
   type Lens, type Audience,
 } from "./aeos-content";
+import { TrendChart, StackBars, RampChart, YearTable, ExitLadder, CapTableChart } from "./Charts";
+import { YEARS, EXIT, ROUNDS, COMMERCE, MODEL_INPUTS, FIRST_PROFITABLE_QUARTER, BREAKEVEN, PEAK_FUNDING, usd } from "./finance";
 import { requestAccess, type AccessState } from "./actions";
 
 const ACCENT = "#ff5b2e";
 const GATE_KEY = "aeos-unlocked";
+const LENS_COLOR: Record<Lens, string> = { studio: "#ff5b2e", stack: "#39c07c", investor: "#2f9df4" };
 
 /**
  * globals.css sets `h1,h2,h3,h4 { color: var(--ink) }` outside any cascade
@@ -423,6 +426,89 @@ function EstimatePanel({ color = ACCENT }: { color?: string }) {
       </div>
       <p className="mt-3 text-[11.5px] leading-relaxed text-white/35">{ESTIMATE_DEMO.note}</p>
     </Card>
+  );
+}
+
+/** Clicking an industry opens its own business case. */
+function BusinessCase({ audience, color = ACCENT, onClose }:
+  { audience: Audience; color?: string; onClose: () => void }) {
+  const b = BUSINESS[audience.id];
+  if (!b) return null;
+  return (
+    <div id="business-case" className="mt-5 overflow-hidden rounded-2xl border"
+      style={{ borderColor: `color-mix(in srgb, ${color} 45%, transparent)`, background: "rgba(0,0,0,.32)" }}>
+      <div className="flex flex-wrap items-start justify-between gap-4 p-6 pb-4"
+        style={{ background: `linear-gradient(130deg, color-mix(in srgb, ${color} 14%, transparent), transparent 70%)` }}>
+        <div className="max-w-3xl">
+          <Kicker color={color}>{audience.icon} Business model · {audience.name}</Kicker>
+          <h3 className="mt-2 text-2xl font-extrabold leading-tight text-white sm:text-3xl">{b.headline}</h3>
+          <p className="mt-3 text-[15px] leading-relaxed text-white/60">{b.premise}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl border px-4 py-3 text-center" style={{ borderColor: `color-mix(in srgb, ${color} 50%, transparent)` }}>
+            <div className="text-2xl font-extrabold text-white">{b.pin.big}</div>
+            <div className="mt-0.5 max-w-[150px] text-[10.5px] leading-snug text-white/45">{b.pin.label}</div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close business case"
+            className="rounded-lg border px-2.5 py-1.5 text-sm text-white/45 hover:text-white"
+            style={{ borderColor: "rgba(255,255,255,.15)" }}>✕</button>
+        </div>
+      </div>
+
+      <div className="grid gap-5 border-t p-6 lg:grid-cols-2" style={{ borderColor: "rgba(255,255,255,.08)" }}>
+        <div>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest text-white/40">Where the industry is going</div>
+          <h4 className="mt-1 text-[16px] font-bold text-white">{b.trend.title}</h4>
+          <div className="mt-3"><TrendChart data={b.trend.data} aLabel={b.trend.aLabel} bLabel={b.trend.bLabel} color={color} /></div>
+          <p className="mt-2 text-[11.5px] leading-relaxed text-white/35">{b.trend.note}</p>
+        </div>
+        <div>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest text-white/40">What moves, and by how much</div>
+          <h4 className="mt-1 mb-3 text-[16px] font-bold text-white">Cost stack, indexed to today</h4>
+          <StackBars rows={b.stack} color={color} />
+          <p className="mt-3 text-[11.5px] leading-relaxed text-white/35">{b.stackNote}</p>
+        </div>
+      </div>
+
+      <div className="border-t p-6" style={{ borderColor: "rgba(255,255,255,.08)" }}>
+        <div className="text-[11px] font-extrabold uppercase tracking-widest text-white/40">Where the value shows up</div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {b.drivers.map((d) => (
+            <div key={d.metric} className="rounded-xl border p-4" style={{ borderColor: "rgba(255,255,255,.1)", background: "rgba(255,255,255,.025)" }}>
+              <div className="text-[11px] font-extrabold uppercase tracking-wider" style={{ color }}>{d.metric}</div>
+              <div className="mt-1 text-[13.5px] font-bold leading-tight text-white">{d.label}</div>
+              <p className="mt-1 text-[12px] leading-relaxed text-white/50">{d.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-5 border-t p-6 lg:grid-cols-[1.2fr_1fr]" style={{ borderColor: "rgba(255,255,255,.08)" }}>
+        <div>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest text-white/40">How the commercial relationship works</div>
+          <div className="mt-3 space-y-3">
+            {b.model.map((m) => (
+              <div key={m.k} className="grid gap-1 sm:grid-cols-[170px_1fr] sm:gap-4">
+                <div className="text-[12.5px] font-bold text-white/75">{m.k}</div>
+                <div className="text-[13px] leading-relaxed text-white/55">{m.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border p-5" style={{ borderColor: `color-mix(in srgb, ${color} 45%, transparent)`, background: `color-mix(in srgb, ${color} 8%, transparent)` }}>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color }}>The ask</div>
+          <p className="mt-2 text-[16px] font-bold leading-snug text-white">{b.ask}</p>
+          <a href="tel:9728006670" className="mt-4 block rounded-xl px-4 py-3 text-center text-[14px] font-bold text-white"
+            style={{ background: `linear-gradient(120deg, ${color}, #ff8a4b)` }}>
+            Talk to Jeff — 972-800-6670
+          </a>
+          <a href="#docs" className="mt-2 block rounded-xl border px-4 py-2.5 text-center text-[13px] font-bold text-white/75"
+            style={{ borderColor: "rgba(255,255,255,.18)" }}>
+            See the numbers
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -844,7 +930,8 @@ export function AEOSExperience({ password }: { password: string }) {
   function pick(a: Audience) {
     setAudienceId(a.id);
     setLens(a.lens);
-    requestAnimationFrame(() => document.getElementById("lens-top")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    requestAnimationFrame(() =>
+      document.getElementById("business-case")?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   if (!ready) return <div style={{ minHeight: "100dvh", background: "#0a0e17" }} />;
@@ -903,6 +990,9 @@ export function AEOSExperience({ password }: { password: string }) {
             </div>
           )}
         </Card>
+        {audience && (
+          <BusinessCase audience={audience} color={LENS_COLOR[lens]} onClose={() => setAudienceId(null)} />
+        )}
       </Section>
 
       {/* ── lens switcher ── */}
@@ -928,7 +1018,7 @@ export function AEOSExperience({ password }: { password: string }) {
       {lens === "investor" && <InvestorLens audience={audience} />}
 
       {/* ── documents ── */}
-      <Section className="border-t">
+      <Section id="docs" className="border-t">
         <Kicker>The documents</Kicker>
         <h2 className="mt-2 text-3xl font-extrabold text-white">Everything else you would ask for.</h2>
         <div className="mt-5 flex flex-wrap gap-1.5">
@@ -1036,6 +1126,12 @@ export function AEOSExperience({ password }: { password: string }) {
             </a>
             <a href="/corporate-structure" className="rounded-xl border px-6 py-3 font-bold text-white/80" style={{ borderColor: "rgba(255,255,255,.2)" }}>
               Back to the ecosystem
+            </a>
+            <a href="/corporate-structure/AEOS/one-pager" className="rounded-xl border px-6 py-3 font-bold" style={{ borderColor: "rgba(47,157,244,.55)", background: "rgba(47,157,244,.12)", color: "#8fcbff" }}>
+              📈 Investment one-pager · PE
+            </a>
+            <a href="/corporate-structure/AEOS/business-plan" className="rounded-xl border px-6 py-3 font-bold" style={{ borderColor: "rgba(57,192,124,.55)", background: "rgba(57,192,124,.12)", color: "#7fe0ac" }}>
+              📊 The business plan
             </a>
           </div>
         </div>

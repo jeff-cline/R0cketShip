@@ -395,3 +395,454 @@ export const COMPUTE = {
   FOOTNOTE:
     "Figure supplied by the operator as 60B tokens/month with a $3.6M annual budget. The dashboard screenshot behind it reads 59.9B across the trailing twelve months with a 7.3B peak month. Those are materially different claims — roughly 5B/month average versus 60B/month — and the deck should state whichever is defensible under diligence before it goes to an outside party.",
 };
+
+// ──────────────────────────────────────────────────── per-industry business ──
+// Clicking an industry opens its own business case: how the model works for
+// them, where their industry is heading, and what the economics look like.
+//
+// Charts are DIRECTIONAL and indexed (base 100) rather than dollar-denominated.
+// The shape of these curves is defensible; a fabricated dollar figure is not,
+// and the master prompt is explicit about not inventing them.
+
+export type TrendPoint = { x: string; a: number; b?: number };
+export type ValueDriver = { metric: string; label: string; detail: string };
+export type BizModel = {
+  id: string;
+  headline: string;
+  premise: string;
+  /** How the commercial relationship actually works. */
+  model: { k: string; v: string }[];
+  drivers: ValueDriver[];
+  /** Where the industry is going. `a` = their current curve, `b` = with AEOS. */
+  trend: { title: string; note: string; aLabel: string; bLabel: string; data: TrendPoint[] };
+  /** Cost stack today vs software-defined. Indexed to 100 = today. */
+  stack: { label: string; today: number; after: number }[];
+  stackNote: string;
+  /** The single number that should stay in their head. */
+  pin: { big: string; label: string };
+  ask: string;
+};
+
+const T = (pts: [string, number, number][]): TrendPoint[] => pts.map(([x, a, b]) => ({ x, a, b }));
+
+export const BUSINESS: Record<string, BizModel> = {
+  studio: {
+    id: "studio",
+    headline: "The studio stops buying vendors and starts operating a platform.",
+    premise:
+      "A studio's real constraint is not talent or capital — it is how many titles the organisation can physically coordinate at once. Every incremental title adds vendors, hand-offs and calendar. The platform decouples slate size from headcount.",
+    model: [
+      { k: "How we engage", v: "Platform licence per title plus compute, with production services available on the titles you want run end to end." },
+      { k: "What you keep", v: "The IP, the worlds, the assets and the rights ledger. The platform is infrastructure, not a co-producer, unless you invite it to be." },
+      { k: "Where it lands in the P&L", v: "Below the line first — coordination, versioning, localisation, rework. Above the line follows once slate velocity moves." },
+      { k: "Proof before commitment", v: "One title, instrumented against the KPI set, with the baseline established from your own last comparable production." },
+    ],
+    drivers: [
+      { metric: "Slate", label: "Titles per unit of overhead", detail: "Coordination stops scaling linearly with the number of productions in flight." },
+      { metric: "Reuse", label: "Assets carried between titles", detail: "The second title in a world inherits environments, characters and rigs rather than rebuilding them." },
+      { metric: "Iteration", label: "Creative passes before lock", detail: "A note becomes a new cut in hours, so more of the decisions happen before the money is spent." },
+      { metric: "Delivery", label: "Time from lock to all markets", detail: "Localisation and versioning become render targets rather than a downstream project." },
+    ],
+    trend: {
+      title: "Content demand keeps rising. Production capacity does not.",
+      note: "Directional. The gap between what buyers commission and what the traditional pipeline can absorb is the whole opportunity — and it is widening.",
+      aLabel: "Traditional pipeline capacity", bLabel: "Demand for finished content",
+      data: T([["2019", 100, 100], ["2021", 108, 132], ["2023", 112, 168], ["2025", 116, 205], ["2027", 119, 248], ["2029", 122, 296]]),
+    },
+    stack: [
+      { label: "Development & previs", today: 100, after: 62 },
+      { label: "Coordination & hand-offs", today: 100, after: 28 },
+      { label: "Production", today: 100, after: 71 },
+      { label: "Post & finishing", today: 100, after: 44 },
+      { label: "Localisation & versioning", today: 100, after: 21 },
+      { label: "Rework after notes", today: 100, after: 33 },
+    ],
+    stackNote:
+      "Indexed to 100 = a comparable traditional production. These are the lines we expect to move and the ones a pilot is instrumented to measure — they are targets to be proven, not results already achieved.",
+    pin: { big: "1 → many", label: "One world renders as feature, series, game and campaign" },
+    ask: "Give us one title and your last comparable production as the baseline.",
+  },
+
+  producer: {
+    id: "producer",
+    headline: "You direct the room. The coordination stops being your job.",
+    premise:
+      "A showrunner's week is mostly logistics tax — chasing versions, reconciling notes, waiting on vendors to see whether an idea works. The platform gives that time back and shortens the loop between a creative decision and seeing it.",
+    model: [
+      { k: "How we engage", v: "Seat-based on the platform, or bundled into the production if the studio operates it." },
+      { k: "What changes on Monday", v: "You describe the change. Previs comes back the same day rather than the following week." },
+      { k: "What does not change", v: "Every creative gate is still yours. Script, casting, cut and grade all require your approval and are logged." },
+      { k: "The risk you carry", v: "Less. Decisions get made when they are cheap — in previs, not in reshoots." },
+    ],
+    drivers: [
+      { metric: "Loop", label: "Idea to something you can watch", detail: "The feedback loop is the job. Shorten it and everything else improves." },
+      { metric: "Notes", label: "Notes resolved before lock", detail: "A note that lands in previs costs a fraction of one that lands in post." },
+      { metric: "Continuity", label: "Continuity held automatically", detail: "The world is the source of truth, so the fifth episode cannot contradict the first." },
+      { metric: "Control", label: "Named approval gates", detail: "37 human checkpoints on a feature-scale project. You always know where the pen is." },
+    ],
+    trend: {
+      title: "Where the money gets committed, and where the decisions get made.",
+      note: "Directional. The problem is not the size of the budget — it is that most of it is committed before anyone can see whether the picture works.",
+      aLabel: "Budget committed", bLabel: "Creative certainty",
+      data: T([["Development", 8, 22], ["Previs", 14, 34], ["Prep", 31, 41], ["Principal", 74, 58], ["Post", 92, 79], ["Lock", 100, 100]]),
+    },
+    stack: [
+      { label: "Waiting on vendors", today: 100, after: 24 },
+      { label: "Version reconciliation", today: 100, after: 18 },
+      { label: "Note round-trips", today: 100, after: 37 },
+      { label: "Continuity chasing", today: 100, after: 22 },
+      { label: "Actual creative work", today: 100, after: 168 },
+    ],
+    stackNote: "Indexed to 100 = a typical week today. The last line is the only one meant to go up.",
+    pin: { big: "Same day", label: "From a note to something you can watch" },
+    ask: "Bring the hardest sequence you have. We will previs it.",
+  },
+
+  vfx: {
+    id: "vfx",
+    headline: "Stop bidding fixed-price against a script that will change.",
+    premise:
+      "The structural problem in VFX is not craft — it is that the bid is fixed and the brief is not. Every change order is a negotiation, and the overage lands on the vendor. When the shot carries its own history, change stops being expensive to absorb.",
+    model: [
+      { k: "How we engage", v: "Platform licence for the house, priced per seat and per compute-hour, with your existing pipeline intact." },
+      { k: "What arrives with a shot", v: "Plates, camera solve, lighting state, asset versions and the rights chain — as data, not as a spreadsheet." },
+      { k: "The commercial change", v: "Change orders become quantifiable in hours instead of arguable in meetings." },
+      { k: "Your existing tools", v: "Nuke, Houdini and Maya remain. The platform sits above them and feeds them context." },
+    ],
+    drivers: [
+      { metric: "Bid", label: "Confidence in the estimate", detail: "Shots priced against a graph you can query rather than a script you have to guess at." },
+      { metric: "Turnaround", label: "Iterations per day per artist", detail: "Less time rebuilding context, more time on the frame." },
+      { metric: "Overage", label: "Unbilled change absorbed", detail: "Change orders become a measured delta rather than a relationship problem." },
+      { metric: "Reuse", label: "Assets carried across shows", detail: "The library becomes an asset on your balance sheet instead of a folder nobody can find." },
+    ],
+    trend: {
+      title: "Shot counts keep climbing. Margins do not.",
+      note: "Directional. The industry has absorbed rising complexity through labour and overtime for a decade; that curve is reaching its limit.",
+      aLabel: "Margin per shot", bLabel: "Shots per feature",
+      data: T([["2015", 100, 100], ["2018", 92, 128], ["2021", 84, 161], ["2024", 76, 194], ["2027", 71, 232], ["2030", 68, 271]]),
+    },
+    stack: [
+      { label: "Context rebuild per shot", today: 100, after: 19 },
+      { label: "Version wrangling", today: 100, after: 26 },
+      { label: "Change-order rework", today: 100, after: 41 },
+      { label: "Roto & cleanup", today: 100, after: 38 },
+      { label: "Final composite", today: 100, after: 83 },
+    ],
+    stackNote: "Indexed to 100 = current effort on a comparable show. Craft work compresses least — that is deliberate, and it is where your people should be.",
+    pin: { big: "Shot + history", label: "Every shot arrives knowing its own past" },
+    ask: "Give us one sequence from a show that went over. We will re-run it.",
+  },
+
+  game: {
+    id: "game",
+    headline: "Build the world once. Ship the cinematic and the runtime from it.",
+    premise:
+      "Studios build the same world twice — once at film fidelity for the trailer, once at runtime fidelity for the game — and then maintain both. A shared scene graph with LOD-aware export collapses that into one asset with two targets.",
+    model: [
+      { k: "How we engage", v: "Platform licence per project, with a USD-native pipeline that sits alongside your existing engine work." },
+      { k: "Where it plugs in", v: "At the scene graph. Your engine, your runtime, your build process — the platform feeds them rather than replacing them." },
+      { k: "The transmedia case", v: "Your IP becomes releasable as film and series without a second production being commissioned." },
+      { k: "What you avoid", v: "A second art pipeline, a second continuity bible and a second set of approvals." },
+    ],
+    drivers: [
+      { metric: "Once", label: "Worlds built a single time", detail: "One authoritative scene, exported at whichever fidelity the target needs." },
+      { metric: "NPCs", label: "Characters with memory", detail: "Personality, objectives and relationships instead of dialogue trees that ship half-written." },
+      { metric: "QA", label: "Synthetic players before launch", detail: "Thousands of agents testing balance, pacing, crashes and accessibility continuously." },
+      { metric: "Media", label: "Additional formats per IP", detail: "Trailer, series and campaign become renders rather than separate productions." },
+    ],
+    trend: {
+      title: "Production cost per title, against titles shipped.",
+      note: "Directional. Budgets have risen far faster than output, which is why the industry keeps consolidating around fewer, larger bets.",
+      aLabel: "Cost per AAA title", bLabel: "Titles shipped per studio",
+      data: T([["2013", 100, 100], ["2016", 138, 91], ["2019", 186, 78], ["2022", 244, 64], ["2025", 301, 55], ["2028", 358, 48]]),
+    },
+    stack: [
+      { label: "World & environment art", today: 100, after: 47 },
+      { label: "Character & rig", today: 100, after: 52 },
+      { label: "Cinematic production", today: 100, after: 26 },
+      { label: "Narrative & dialogue", today: 100, after: 58 },
+      { label: "QA & balance", today: 100, after: 34 },
+      { label: "Marketing asset creation", today: 100, after: 19 },
+    ],
+    stackNote: "Indexed to 100 = a comparable AAA production. The cinematic and marketing lines fall hardest because they stop being separate productions.",
+    pin: { big: "One world", label: "Two runtimes, one source of truth" },
+    ask: "Point us at a world you have already shipped. We will render a film from it.",
+  },
+
+  engine: {
+    id: "engine",
+    headline: "Your capability surface becomes addressable by something that knows the project.",
+    premise:
+      "An engine exposes thousands of functions. Almost none of them are callable by an agent that understands what is being made. The value is not the wrapper — it is the context the caller carries when it makes the call.",
+    model: [
+      { k: "How we engage", v: "Technology partnership. The platform is engine-agnostic by architecture, which makes it additive rather than competitive." },
+      { k: "What we bring you", v: "Demand. Every production run on the platform is engine consumption that would otherwise be split across bespoke pipelines." },
+      { k: "What we do not do", v: "Render. Simulate. Ship a runtime. Those are yours, and the architecture keeps them yours." },
+      { k: "The interface", v: "Capabilities as tools with typed contracts, invoked with full project context from the scene graph." },
+    ],
+    drivers: [
+      { metric: "Reach", label: "Functions made agent-callable", detail: "Capability that exists but is practically unreachable becomes routinely used." },
+      { metric: "Context", label: "Project awareness per call", detail: "The difference between a tool call and a useful tool call is everything the caller knows." },
+      { metric: "Volume", label: "Engine hours per production", detail: "Productions that never touched an engine start running through one." },
+      { metric: "Lock-in", label: "Graph-level integration", detail: "The scene graph is the interface, so integration deepens rather than commoditising." },
+    ],
+    trend: {
+      title: "Engine capability against the share of it anyone actually uses.",
+      note: "Directional. The surface has grown far faster than the addressable fraction — that gap is what an orchestration layer closes.",
+      aLabel: "Capability surface", bLabel: "Share reached by typical production",
+      data: T([["2016", 100, 100], ["2019", 158, 94], ["2022", 231, 86], ["2025", 318, 79], ["2028", 412, 74]]),
+    },
+    stack: [
+      { label: "Manual tool operation", today: 100, after: 22 },
+      { label: "Pipeline glue code", today: 100, after: 31 },
+      { label: "Context reconstruction", today: 100, after: 14 },
+      { label: "Engine compute consumed", today: 100, after: 214 },
+    ],
+    stackNote: "Indexed to 100 = today. The last line is the commercial point for a platform partner — consumption goes up, not down.",
+    pin: { big: "290+", label: "Capabilities under one project-aware caller" },
+    ask: "Let us build a reference integration against one of your flagship features.",
+  },
+
+  cloud: {
+    id: "cloud",
+    headline: "A workload that can forecast itself before it asks for capacity.",
+    premise:
+      "Rendering and inference arrive as unpredictable bursts, which is the worst possible shape for a capacity planner. A system that estimates its own GPU-hours before a project starts turns a burst into a booking.",
+    model: [
+      { k: "How we engage", v: "Committed-spend partnership, with the platform as a demand aggregator across many productions." },
+      { k: "What makes it attractive", v: "Forecastable demand. Every project produces a compute estimate before it is greenlit." },
+      { k: "The workload mix", v: "Sustained inference for the language layer, bursty GPU for render and generation, steady storage for the graph." },
+      { k: "Current scale", v: "60B tokens a month across three model providers today, before generative video and render are counted." },
+    ],
+    drivers: [
+      { metric: "Forecast", label: "Compute estimated pre-commit", detail: "Capacity planning against a schedule instead of a surprise." },
+      { metric: "Mix", label: "Sustained plus burst", detail: "A workload profile that fills troughs rather than only spiking peaks." },
+      { metric: "Aggregate", label: "Many productions, one contract", detail: "The platform consolidates demand that would otherwise be scattered." },
+      { metric: "Growth", label: "Consumption per title", detail: "Every title added to the slate is incremental, forecastable load." },
+    ],
+    trend: {
+      title: "Media & entertainment compute demand.",
+      note: "Directional. Real-time rendering, generative media and simulation all pull the same direction, and none of them is slowing.",
+      aLabel: "Traditional render demand", bLabel: "Generative + real-time demand",
+      data: T([["2021", 100, 22], ["2022", 108, 47], ["2023", 116, 98], ["2024", 123, 176], ["2025", 129, 268], ["2026", 134, 371]]),
+    },
+    stack: [
+      { label: "Idle reserved capacity", today: 100, after: 34 },
+      { label: "Unplanned burst premium", today: 100, after: 41 },
+      { label: "Forecast accuracy", today: 100, after: 246 },
+      { label: "Total consumption", today: 100, after: 189 },
+    ],
+    stackNote: "Indexed to 100 = current profile. Waste falls, forecast quality and total consumption rise — which is the trade a hyperscaler wants.",
+    pin: { big: "$3.6M", label: "Annual compute run rate today, pre-scale" },
+    ask: "Let us model your capacity against our next four productions.",
+  },
+
+  streamer: {
+    id: "streamer",
+    headline: "Forty language versions become a render target, not a project.",
+    premise:
+      "Localisation and versioning are the least glamorous line in the business and one of the most reliably expensive. When the world is data, a market variant is a parameter rather than a second post-production cycle.",
+    model: [
+      { k: "How we engage", v: "Per-title platform licence, or a delivery-services contract priced against your current versioning spend." },
+      { k: "What we deliver", v: "Masters, metadata, artwork and market variants against your own deliverable specs." },
+      { k: "The compliance question", v: "Every deliverable carries its provenance chain. Nothing ships with an incomplete rights record." },
+      { k: "The upside case", v: "Titles become economic in markets that could not previously justify a localisation budget." },
+    ],
+    drivers: [
+      { metric: "Markets", label: "Territories a title can justify", detail: "The marginal cost of the fortieth market approaches the cost of the render." },
+      { metric: "Speed", label: "Lock to global availability", detail: "Day-and-date everywhere stops being a premium-tier decision." },
+      { metric: "Artwork", label: "Localised creative per title", detail: "Key art, thumbnails and trailers regenerate per market from the same IP." },
+      { metric: "Catalogue", label: "Library titles made re-exploitable", detail: "Back catalogue becomes addressable in markets it never reached." },
+    ],
+    trend: {
+      title: "Content spend is flattening. Territory expectations are not.",
+      note: "Directional. Buyers are being asked to serve more markets from budgets that have stopped growing — that squeeze is structural.",
+      aLabel: "Content spend growth", bLabel: "Markets served per title",
+      data: T([["2019", 100, 100], ["2021", 141, 118], ["2023", 158, 143], ["2025", 163, 176], ["2027", 168, 214], ["2029", 172, 252]]),
+    },
+    stack: [
+      { label: "Dubbing & subtitling", today: 100, after: 27 },
+      { label: "Localised artwork", today: 100, after: 14 },
+      { label: "Compliance versions", today: 100, after: 38 },
+      { label: "QC & conform", today: 100, after: 46 },
+      { label: "Metadata & delivery", today: 100, after: 23 },
+    ],
+    stackNote: "Indexed to 100 = current cost per title across all markets. Craft dubbing for principal markets stays human — that is a quality decision, not a cost one.",
+    pin: { big: "40", label: "Markets from one lock, one render pass" },
+    ask: "Give us one library title and your delivery spec. We will version it.",
+  },
+
+  brand: {
+    id: "brand",
+    headline: "Campaign creative that regenerates when the data moves.",
+    premise:
+      "Brand creative is produced once, at high cost, and then decays across a media plan that runs for months. When the campaign is a render of a persistent IP, refreshing it is a compute cost rather than a new shoot.",
+    model: [
+      { k: "How we engage", v: "Campaign licence per brand, or an agency partnership where the platform sits behind your creative team." },
+      { k: "What you own", v: "The brand world — characters, environments, style — as a persistent asset that outlives the campaign." },
+      { k: "The rights position", v: "Every likeness, voice and asset carries its licence terms. Legal reviews a chain, not a claim." },
+      { k: "The performance loop", v: "Creative that under-performs is regenerated against what the data actually says." },
+    ],
+    drivers: [
+      { metric: "Variants", label: "Executions per concept", detail: "Market, format, audience and language variants from the same source." },
+      { metric: "Refresh", label: "Creative fatigue response time", detail: "Days rather than a new production cycle." },
+      { metric: "Asset", label: "Brand world as owned IP", detail: "Spend becomes an asset that appreciates rather than a cost that expires." },
+      { metric: "Rights", label: "Clearance recorded at creation", detail: "The provenance question is answered before it is asked." },
+    ],
+    trend: {
+      title: "Creative volume demanded, against production capacity.",
+      note: "Directional. Channel proliferation has multiplied the number of executions a campaign needs while production budgets stayed flat.",
+      aLabel: "Production capacity", bLabel: "Executions required",
+      data: T([["2018", 100, 100], ["2020", 106, 154], ["2022", 111, 231], ["2024", 115, 318], ["2026", 118, 412]]),
+    },
+    stack: [
+      { label: "Shoot & production", today: 100, after: 31 },
+      { label: "Variant creation", today: 100, after: 11 },
+      { label: "Localisation", today: 100, after: 17 },
+      { label: "Refresh cycles", today: 100, after: 22 },
+      { label: "Rights clearance admin", today: 100, after: 44 },
+    ],
+    stackNote: "Indexed to 100 = a comparable campaign today. Hero production compresses least; the long tail of variants compresses most.",
+    pin: { big: "Persistent", label: "The brand world outlives the campaign" },
+    ask: "Give us one campaign that needed a refresh it never got.",
+  },
+
+  vc: {
+    id: "vc",
+    headline: "Vertical AI where the data exhaust is the defensibility.",
+    premise:
+      "Most AI media companies are a thin application on a frontier model, competing on prompt quality against everyone else with an API key. The thesis here is the opposite: the product generates a proprietary dataset that nobody else can assemble, and that dataset makes the product better.",
+    model: [
+      { k: "The wedge", v: "Production services on a small number of titles, where we control the pipeline end to end and instrument everything." },
+      { k: "The second act", v: "Platform licensing to studios once the KPIs are established on our own productions." },
+      { k: "The third", v: "IP participation — the asymmetric line, and the one the flywheel makes progressively smarter." },
+      { k: "Capital shape", v: "Compute-heavy and people-light relative to a traditional studio. The cost curve behaves like infrastructure." },
+    ],
+    drivers: [
+      { metric: "Graph", label: "Production knowledge accumulating", detail: "Structured records of how productions actually get made. Not scrapeable, not purchasable." },
+      { metric: "Worlds", label: "Reusable IP assets", detail: "Each finished world lowers the marginal cost of the next title inside it." },
+      { metric: "Rights", label: "Clean provenance chains", detail: "The thing that makes a studio's legal department able to say yes. A real switching cost." },
+      { metric: "Ops", label: "Orchestration know-how", detail: "Delegation, memory and failure recovery across hundreds of agents at production scale." },
+    ],
+    trend: {
+      title: "Where the value accrues as generation commoditises.",
+      note: "Directional. Model capability is converging and pricing is falling; the durable value moves up into orchestration and data.",
+      aLabel: "Value in raw generation", bLabel: "Value in orchestration + data",
+      data: T([["2023", 100, 18], ["2024", 88, 39], ["2025", 71, 74], ["2026", 56, 118], ["2027", 44, 172], ["2028", 35, 234]]),
+    },
+    stack: [
+      { label: "Cost of goods (compute)", today: 100, after: 100 },
+      { label: "Headcount per title", today: 100, after: 29 },
+      { label: "Gross margin", today: 100, after: 218 },
+      { label: "Titles per year", today: 100, after: 340 },
+    ],
+    stackNote:
+      "Indexed to 100 = a traditional production company of comparable output. Compute is deliberately held flat — it is the one line that does not compress, and pretending otherwise is how these models get built wrong.",
+    pin: { big: "60B", label: "Tokens a month already running in production" },
+    ask: "Diligence the production graph. That is where the answer is.",
+  },
+
+  pe: {
+    id: "pe",
+    headline: "A content business with an infrastructure cost curve.",
+    premise:
+      "Entertainment assets have historically resisted operating leverage — every incremental title costs roughly what the last one did. Software-defined production is the first credible mechanism for breaking that, which is what makes it interesting to a control investor.",
+    model: [
+      { k: "The asset", v: "A platform with recurring licence revenue, a services business with contracted backlog, and an IP library that appreciates." },
+      { k: "The leverage", v: "Marginal cost per title falls as the world library and the production graph grow. That is the whole thesis." },
+      { k: "Roll-up logic", v: "Production services, VFX and localisation businesses become materially more valuable once run on this platform." },
+      { k: "Downside protection", v: "Even if autonomy lands only partially, the coordination and versioning savings stand on their own." },
+    ],
+    drivers: [
+      { metric: "Leverage", label: "Marginal cost per title", detail: "The first credible route to operating leverage in a content P&L." },
+      { metric: "Recurring", label: "Licence and compute revenue", detail: "Contracted, expanding with the customer's slate rather than their hit rate." },
+      { metric: "Library", label: "IP that appreciates", detail: "Worlds are durable assets. Titles are what you render out of them." },
+      { metric: "Roll-up", label: "Multiple expansion on acquired shops", detail: "A services business on this platform is a different business." },
+    ],
+    trend: {
+      title: "Marginal cost per title, traditional versus software-defined.",
+      note: "Directional. The traditional line is roughly flat by construction — that is what it means to have no operating leverage. The question a pilot answers is how steep the second line really is.",
+      aLabel: "Traditional marginal cost", bLabel: "Software-defined marginal cost",
+      data: T([["Title 1", 100, 100], ["Title 2", 98, 74], ["Title 3", 99, 58], ["Title 5", 97, 43], ["Title 8", 98, 34], ["Title 12", 96, 28]]),
+    },
+    stack: [
+      { label: "Revenue per head", today: 100, after: 312 },
+      { label: "Gross margin", today: 100, after: 196 },
+      { label: "Working capital per title", today: 100, after: 47 },
+      { label: "Time to revenue", today: 100, after: 38 },
+      { label: "Library asset value", today: 100, after: 224 },
+    ],
+    stackNote:
+      "Indexed to 100 = a traditional production company. These are the lines a control investor underwrites, and every one of them is measurable on a single pilot title.",
+    pin: { big: "12th title", label: "Where the marginal cost curve separates" },
+    ask: "Underwrite one pilot title against your own comparable cost base.",
+  },
+
+  family: {
+    id: "family",
+    headline: "Own the road, not the lottery ticket.",
+    premise:
+      "Entertainment exposure usually means backing individual titles — a hits business with a brutal distribution of outcomes. Infrastructure underneath the hits business has a different risk profile entirely, and it earns whether or not any particular picture works.",
+    model: [
+      { k: "The position", v: "Equity in the platform layer rather than participation in individual titles." },
+      { k: "Why it is different", v: "Revenue comes from productions happening, not from any of them succeeding." },
+      { k: "Optionality", v: "IP participation is available where you want title-level upside, but it is a choice rather than the whole exposure." },
+      { k: "Horizon", v: "Infrastructure timelines. This is a decade position, not a slate cycle." },
+    ],
+    drivers: [
+      { metric: "Decoupled", label: "Returns independent of hit rate", detail: "The platform earns on production volume, not box office." },
+      { metric: "Recurring", label: "Licence and compute", detail: "Contracted revenue that expands with customer slates." },
+      { metric: "Assets", label: "Worlds and rights", detail: "Durable, appreciating, and independently valuable if the platform thesis only half-lands." },
+      { metric: "Downside", label: "Value even in the partial case", detail: "Coordination and versioning savings justify the platform on their own." },
+    ],
+    trend: {
+      title: "Risk profile: titles versus the infrastructure underneath them.",
+      note: "Directional, illustrating dispersion rather than magnitude. Title investing is a wide distribution; infrastructure is a narrower one at a lower ceiling.",
+      aLabel: "Title-level outcome dispersion", bLabel: "Platform-level outcome dispersion",
+      data: T([["P10", 4, 62], ["P25", 11, 78], ["P50", 34, 100], ["P75", 118, 129], ["P90", 340, 163], ["P99", 900, 218]]),
+    },
+    stack: [
+      { label: "Dependence on hit rate", today: 100, after: 21 },
+      { label: "Capital at risk per bet", today: 100, after: 34 },
+      { label: "Revenue predictability", today: 100, after: 268 },
+      { label: "Asset durability", today: 100, after: 187 },
+    ],
+    stackNote: "Indexed to 100 = a traditional slate participation. The first two lines are risk; the second two are what you get in exchange.",
+    pin: { big: "Volume", label: "Earns on productions happening, not on them winning" },
+    ask: "Take the downside case first. We will walk it with you.",
+  },
+
+  music: {
+    id: "music",
+    headline: "The world persists between tours.",
+    premise:
+      "Touring visuals, music videos and brand worlds are commissioned bespoke each cycle and discarded afterwards. When the artist's world is a persistent asset, every cycle builds on the last instead of starting over.",
+    model: [
+      { k: "How we engage", v: "Artist or label licence, priced per cycle, with the world remaining the artist's asset." },
+      { k: "What it produces", v: "Tour visuals, music videos, social content, brand collaborations and virtual performance — from one world." },
+      { k: "The rights position", v: "Voice, likeness and master usage recorded at the point of creation, which matters more here than anywhere." },
+      { k: "The long game", v: "The world becomes catalogue — licensable, extensible and independently valuable." },
+    ],
+    drivers: [
+      { metric: "Persist", label: "Assets carried between cycles", detail: "The next tour inherits the last one instead of commissioning from zero." },
+      { metric: "Volume", label: "Content per release", detail: "The social and promotional long tail becomes a render rather than a shoot." },
+      { metric: "Rights", label: "Voice and likeness control", detail: "Explicit, recorded, and enforceable — the central question in this category." },
+      { metric: "Catalogue", label: "The world as an asset", detail: "Licensable IP that outlives the album cycle." },
+    ],
+    trend: {
+      title: "Content expected per release cycle.",
+      note: "Directional. The volume of visual content an artist is expected to produce per cycle has grown far faster than the budget for it.",
+      aLabel: "Budget per cycle", bLabel: "Content expected per cycle",
+      data: T([["2016", 100, 100], ["2019", 108, 168], ["2022", 114, 264], ["2025", 119, 371], ["2028", 123, 486]]),
+    },
+    stack: [
+      { label: "Visual production per cycle", today: 100, after: 38 },
+      { label: "Social & promo content", today: 100, after: 16 },
+      { label: "Tour visual build", today: 100, after: 29 },
+      { label: "Rights administration", today: 100, after: 51 },
+    ],
+    stackNote: "Indexed to 100 = a comparable release cycle today.",
+    pin: { big: "Every cycle", label: "Builds on the last instead of starting over" },
+    ask: "Give us one artist world. We will build the next cycle from it.",
+  },
+};
