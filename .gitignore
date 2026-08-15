@@ -8,3 +8,15 @@ node_modules/
 
 # user-uploaded media (lives on the box, not in git)
 public/uploads/
+
+# macOS metadata
+._*
+.AppleDouble
+
+# duplicate-name artifacts from Finder copies
+* 2.ts
+* 2.tsx
+* 2.sql
+* 2.json
+* 2.js
+

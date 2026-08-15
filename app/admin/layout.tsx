@@ -13,14 +13,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   // Sales managers get a focused console (just the sales team).
   const items: NavItem[] = isSalesMgr
-    ? [{ href: "/admin/sales", label: "Sales team" }]
+    ? [{ href: "/admin/sales", label: "Sales team" }, { href: "/admin/business-leads", label: "Business Leads" }]
     : [
         { href: "/admin", label: "Dashboard" },
         ...(isGod ? [{ href: "/admin/tenants", label: "White-labels" }] : []),
+        ...(isGod ? [{ href: "/admin/business-leads", label: "Business Leads" }] : []),
+        ...(isGod ? [{ href: "/opportunities", label: "Opportunities" }] : []),
+        ...(isGod ? [{ href: "/admin/upload-decks", label: "Upload Decks" }] : []),
+        ...(isGod ? [{ href: "/admin/crewperk", label: "CrewPerk" }] : []),
         { href: "/admin/branding", label: "Site" },
         { href: "/admin/users", label: "Users" },
         { href: "/admin/billing", label: "Billing" },
         { href: "/admin/partner-program", label: "Partner program" },
+        ...(isGod ? [{ href: "/admin/business-development", label: "Business Development" }] : []),
         ...(isGod ? [{ href: "/admin/sales", label: "Sales team" }] : []),
         ...(isGod ? [{ href: "/admin/coupons", label: "Coupons" }] : []),
         ...(isGod ? [{ href: "/admin/niches", label: "Niches" }] : []),
@@ -28,6 +33,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/leads", label: "Leads" },
         { href: "/admin/integrations", label: "Integrations" },
         { href: "/admin/email", label: "Email" },
+        { href: "/admin/outreach", label: "Outreach" },
         ...(isGod ? [{ href: "/admin/partners", label: "E-Partners" }] : []),
         ...(isGod ? [{ href: "/admin/insights", label: "Insights" }] : []),
       ];

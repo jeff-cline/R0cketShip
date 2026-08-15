@@ -5,6 +5,7 @@ import { tenants } from "@/src/db/schema";
 import { ingestKeyMatches } from "@/src/leads/ingest-key";
 import { ingestRows } from "@/src/leads/ingest";
 import { parseCsvStream, parseJsonArray } from "@/src/leads/parse";
+import { enqueueLeads } from "@/src/outreach/enqueue";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,8 @@ export async function POST(
     const summary = contentType.includes("application/json")
       ? await ingestRows(tenant, "webhook", parseJsonArray(body))
       : await ingestRows(tenant, "webhook", parseCsvStream(body));
+    // Fire automated outreach for the freshly-ingested leads (never block ingest on it).
+    await enqueueLeads(tenant, summary.insertedLeadIds).catch(() => {});
     return NextResponse.json(summary);
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });

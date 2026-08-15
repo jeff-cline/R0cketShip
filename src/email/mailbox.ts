@@ -5,7 +5,7 @@ import { emailMailboxes, emailOutbound, tenants } from "../db/schema";
 import { decryptSecret } from "../crypto/secrets";
 
 export type MailboxRow = typeof emailMailboxes.$inferSelect;
-export type SendKind = "campaign" | "auto_reply" | "password_reset" | "manual";
+export type SendKind = "campaign" | "auto_reply" | "password_reset" | "manual" | "outreach";
 
 function today(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
@@ -74,7 +74,7 @@ async function bumpCount(m: MailboxRow): Promise<void> {
  */
 export async function sendViaPool(
   tenantId: string,
-  msg: { to: string; subject: string; html: string },
+  msg: { to: string; cc?: string; subject: string; html: string },
   kind: SendKind = "manual",
 ): Promise<{ status: "sent" | "failed" | "skipped"; mailboxId: string | null; reason?: string }> {
   const mailbox = await pickMailbox(tenantId);
@@ -93,7 +93,7 @@ export async function sendViaPool(
       auth: mailbox.smtpUser ? { user: mailbox.smtpUser, pass } : undefined,
     });
     const from = mailbox.displayName ? `"${mailbox.displayName}" <${mailbox.address}>` : mailbox.address;
-    await transport.sendMail({ from, to: msg.to, subject: msg.subject, html: msg.html });
+    await transport.sendMail({ from, to: msg.to, cc: msg.cc, subject: msg.subject, html: msg.html });
     await bumpCount(mailbox);
     await db.insert(emailOutbound).values({ tenantId, mailboxId: mailbox.id, toAddr: msg.to, subject: msg.subject, kind, status: "sent" });
     return { status: "sent", mailboxId: mailbox.id };

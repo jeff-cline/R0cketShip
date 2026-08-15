@@ -4,7 +4,7 @@ import { sessions } from "../db/schema";
 import { createSession, destroySession, hashToken } from "./session";
 import type { UserRow } from "./context";
 
-type Role = "god" | "manager" | "customer" | "agent" | "partner" | "sales_manager";
+type Role = "god" | "manager" | "customer" | "agent" | "partner" | "sales_manager" | "bd_partner";
 
 export function canImpersonate(actor: { role: Role; tenantId: string }, target: UserRow): boolean {
   if (target.role === "god") return false;

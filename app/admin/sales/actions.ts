@@ -10,7 +10,7 @@ import { getOrCreateRepCode, setPlatformSettings } from "@/src/referral/core";
 import { runPayoutBatch, markBatchPaid } from "@/src/referral/payouts";
 import { disburseBatch } from "@/src/referral/disburse";
 
-type Role = "partner" | "sales_manager";
+type Role = "partner" | "sales_manager" | "bd_partner";
 
 /** Parse a percent string into a rate string (×/100). Returns undefined on NaN/blank. */
 function pctToRate(v: FormDataEntryValue | null): string | undefined {

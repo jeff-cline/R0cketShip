@@ -35,8 +35,9 @@ async function upsertOne(tenantId: string, source: LeadSource, l: NormalizedLead
   )[0];
 
   if (!existing) {
-    await db.insert(leads).values(leadValues(tenantId, person.id, source, l));
+    const [row] = await db.insert(leads).values(leadValues(tenantId, person.id, source, l)).returning({ id: leads.id });
     summary.inserted++;
+    summary.insertedLeadIds.push(row.id);
     return;
   }
   const incoming = l.lastUpdated?.getTime() ?? null;
@@ -55,7 +56,7 @@ export async function ingestRows(
   source: LeadSource,
   rows: AsyncIterable<Record<string, string>> | Iterable<Record<string, string>>,
 ): Promise<IngestSummary> {
-  const summary: IngestSummary = { inserted: 0, updated: 0, skipped: 0, errors: 0 };
+  const summary: IngestSummary = { inserted: 0, updated: 0, skipped: 0, errors: 0, insertedLeadIds: [] };
   let count = 0;
   for await (const raw of rows as AsyncIterable<Record<string, string>>) {
     const res = normalizeRow(raw);

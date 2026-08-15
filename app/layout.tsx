@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import HubVideoButton from "@/app/_components/HubVideoButton";
 import { Plus_Jakarta_Sans, Inter, Fraunces } from "next/font/google";
 import { getCurrentTenant } from "@/src/tenant/context";
 import type { TenantTheme } from "@/src/tenant/types";
@@ -121,6 +122,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {children}
+        <HubVideoButton />
       </body>
     </html>
   );

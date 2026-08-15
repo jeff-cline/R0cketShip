@@ -2,8 +2,9 @@ import { requireAuth } from "@/src/auth/guard";
 import { tenantFilter } from "@/src/tenant/scope";
 import { listPendingPayments, paymentsByTenant } from "@/src/billing/topup";
 import { listCoupons } from "@/src/billing/coupons";
-import { markPaidAction, grantCreditsAction, createCouponAction } from "./actions";
+import { markPaidAction, createCouponAction } from "./actions";
 import { PageHeader, Card, SectionTitle } from "@/app/_ui/primitives";
+import { UserGrantPanel } from "./UserGrantPanel";
 
 export default async function AdminBillingPage() {
   const ctx = await requireAuth(["god", "manager"]);
@@ -31,13 +32,10 @@ export default async function AdminBillingPage() {
         </Card>
 
         <Card>
-          <SectionTitle>Grant credits</SectionTitle>
-          <form action={grantCreditsAction} className="flex flex-wrap gap-2">
-            <input name="walletId" placeholder="wallet id" required className="input" />
-            <input name="amount" type="number" step="0.01" placeholder="credits (+/-)" required className="input" />
-            <input name="description" placeholder="note" className="input" />
-            <button className="btn btn-primary">Grant</button>
-          </form>
+          <SectionTitle hint="search by email → review account → grant $ with an audit note">
+            Grant credits
+          </SectionTitle>
+          <UserGrantPanel />
         </Card>
 
         <Card>

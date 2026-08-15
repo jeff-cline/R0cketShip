@@ -26,7 +26,7 @@ export default async function NichesAdminPage() {
         <div className="px-5 pt-5">
           <SectionTitle hint={`${shown} of ${list.length} shown`}>Listed on /niches</SectionTitle>
         </div>
-        <Table head={["Title", "Niche", "Domain", "On /niches", ""]}>
+        <Table head={["Title", "Niche", "Domain", "On /niches", "Actions"]}>
           {list.map((t) => (
             <Tr key={t.id}>
               <Td>
@@ -41,13 +41,17 @@ export default async function NichesAdminPage() {
                 <Badge tone={t.showOnNiches ? "pos" : "neutral"}>{t.showOnNiches ? "Showing" : "Hidden"}</Badge>
               </Td>
               <Td>
-                <form action={toggleNicheAction} className="flex justify-end">
-                  <input type="hidden" name="id" value={t.id} />
-                  <input type="hidden" name="show" value={(!t.showOnNiches).toString()} />
-                  <button className={`btn ${t.showOnNiches ? "btn-ghost" : "btn-primary"}`} style={{ padding: "6px 12px" }}>
-                    {t.showOnNiches ? "Turn off" : "Turn on"}
-                  </button>
-                </form>
+                <div className="flex justify-end items-center" style={{ gap: 6 }}>
+                  <form action={toggleNicheAction}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <input type="hidden" name="show" value={(!t.showOnNiches).toString()} />
+                    <button className={`btn ${t.showOnNiches ? "btn-ghost" : "btn-primary"}`} style={{ padding: "6px 10px" }}>
+                      {t.showOnNiches ? "Turn off" : "Turn on"}
+                    </button>
+                  </form>
+                  <a className="btn btn-ghost" href={`/admin/tenants/${t.id}`} style={{ padding: "6px 10px" }}>Manage</a>
+                  <a className="btn btn-primary" href={`/admin/open-as/${t.id}`} style={{ padding: "6px 10px" }}>Open as ↗</a>
+                </div>
               </Td>
             </Tr>
           ))}

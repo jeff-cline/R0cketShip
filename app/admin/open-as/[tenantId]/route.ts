@@ -38,10 +38,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ tenantId
   }
 
   const impToken = await startImpersonation({ role: ctx.user.role, tenantId: ctx.user.tenantId }, target, token);
-  const res = NextResponse.redirect(new URL("/admin", req.url));
+
+  // Behind nginx, req.url resolves to the internal http://localhost:3000 origin.
+  // Use the forwarded host/proto headers to build a public-facing redirect URL
+  // so the cookie gets set on the right domain and the user lands on the public host.
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") || (req.url.startsWith("https://") ? "https" : "http");
+  const redirectUrl = host ? `${proto}://${host}/admin` : new URL("/admin", req.url).toString();
+
+  const res = NextResponse.redirect(redirectUrl);
   res.cookies.set(SESSION_COOKIE, impToken, {
     httpOnly: true,
-    secure: new URL(req.url).protocol === "https:",
+    secure: proto === "https",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24 * 7,

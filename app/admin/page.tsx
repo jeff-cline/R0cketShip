@@ -5,8 +5,8 @@ import { PageHeader, Card, SectionTitle, StatCard, Table, Tr, Td } from "@/app/_
 import { platformCreditMetrics } from "@/src/reporting/credits";
 import { commissionExpense } from "@/src/referral/reports";
 import { db } from "@/src/db/client";
-import { users, leadDeliveries, leads } from "@/src/db/schema";
-import { sql } from "drizzle-orm";
+import { users, leadDeliveries, leads, missedOpportunities, trendingClicks } from "@/src/db/schema";
+import { gte, sql, eq } from "drizzle-orm";
 
 const usd = (n: number) => (n >= 1000 ? "$" + (n / 1000).toFixed(1) + "k" : "$" + n.toFixed(0));
 const pct = (n: number) => (n * 100).toFixed(0) + "%";
@@ -25,6 +25,41 @@ export default async function AdminPage() {
     // Current leads in each tenant's database (the ingested pool).
     const leadRows = await db.select({ t: leads.tenantId, c: sql<number>`count(*)` }).from(leads).groupBy(leads.tenantId);
     const leadMap = new Map(leadRows.map((r) => [r.t, Number(r.c)]));
+    // Missed opportunities — clicks that couldn't route cleanly in the last 30d.
+    const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const missedTotal = Number(
+      (await db
+        .select({ c: sql<number>`count(*)::int` })
+        .from(missedOpportunities)
+        .where(gte(missedOpportunities.createdAt, since30d)))[0]?.c ?? 0,
+    );
+    const missedByTenant = new Map<string, number>();
+    {
+      const rows = await db
+        .select({ t: missedOpportunities.tenantId, c: sql<number>`count(*)::int` })
+        .from(missedOpportunities)
+        .where(gte(missedOpportunities.createdAt, since30d))
+        .groupBy(missedOpportunities.tenantId);
+      for (const r of rows) if (r.t) missedByTenant.set(r.t, Number(r.c));
+    }
+    // Trending lander clicks — the public hub at /trending. Every offer-card
+    // click 302s through /c/trending/<offerId> which logs a row. This is the
+    // data plumbing for the upcoming monetization layer on those clicks.
+    const trendingTotal = Number(
+      (await db
+        .select({ c: sql<number>`count(*)::int` })
+        .from(trendingClicks)
+        .where(gte(trendingClicks.createdAt, since30d)))[0]?.c ?? 0,
+    );
+    const trendingByTenant = new Map<string, number>();
+    {
+      const rows = await db
+        .select({ t: trendingClicks.tenantId, c: sql<number>`count(*)::int` })
+        .from(trendingClicks)
+        .where(gte(trendingClicks.createdAt, since30d))
+        .groupBy(trendingClicks.tenantId);
+      for (const r of rows) if (r.t) trendingByTenant.set(r.t, Number(r.c));
+    }
 
     return (
       <>
@@ -52,6 +87,56 @@ export default async function AdminPage() {
         <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
           Partner &amp; rep commissions: <span style={{ color: "var(--warn)" }}>{usd(commission.owed)} owed</span> · {usd(commission.paid)} paid — paid from your margins, reduce gross profit.
         </p>
+
+        <SectionTitle hint="last 30 days · public /trending lander attribution">Trending lander</SectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Trending clicks · 30d"
+            value={trendingTotal.toLocaleString()}
+            sub={trendingTotal > 0 ? "visitors clicked an offer" : "no clicks yet"}
+            accent={trendingTotal > 0}
+          />
+          <StatCard
+            label="Tenants earning clicks"
+            value={String(trendingByTenant.size)}
+            sub="distinct WLs with clicked offers"
+          />
+          <StatCard
+            label="Public hub"
+            value="/trending"
+            sub="ranked by performance"
+          />
+          <StatCard
+            label="Monetization"
+            value="next"
+            sub="CPC layer pending"
+          />
+        </div>
+
+        <SectionTitle hint="last 30 days · clicks routed to fallback lander">Missed opportunities</SectionTitle>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            label="Missed clicks · 30d"
+            value={missedTotal.toLocaleString()}
+            sub={missedTotal > 0 ? "fix CTA URLs to recapture" : "all clicks routed cleanly"}
+            accent={missedTotal > 0}
+          />
+          <StatCard
+            label="Tenants impacted"
+            value={String(missedByTenant.size)}
+            sub="distinct WLs leaking clicks"
+          />
+          <StatCard
+            label="Default lander"
+            value="/trending"
+            sub="god setting in Marketplace"
+          />
+          <StatCard
+            label="Fix path"
+            value="set valid CTA"
+            sub="open WL → Outreach → ctaUrl"
+          />
+        </div>
 
         <Card className="mt-6">
           <SectionTitle hint="monthly $">Revenue — last 6 months</SectionTitle>
@@ -108,6 +193,19 @@ export default async function AdminPage() {
   const credit = await platformCreditMetrics(t.id);
   const commission = await commissionExpense(t.id);
   const myLeads = Number((await db.select({ c: sql<number>`count(*)` }).from(leads).where(sql`${leads.tenantId} = ${t.id}`))[0]?.c ?? 0);
+  // Missed-opportunity count for this tenant in the last 30 days. Drives the
+  // "you're leaving money on the table — fix your CTA URL" nudge.
+  const mgrSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const mgrMissed = Number(
+    (await db
+      .select({ c: sql<number>`count(*)::int` })
+      .from(missedOpportunities)
+      .where(
+        sql`${missedOpportunities.tenantId} = ${t.id} AND ${missedOpportunities.createdAt} >= ${mgrSince}`,
+      ))[0]?.c ?? 0,
+  );
+  // Avoid unused-import warning when this branch fires.
+  void eq;
 
   return (
     <>
@@ -120,6 +218,34 @@ export default async function AdminPage() {
         <StatCard label="Outstanding credits" value={credit.outstandingCredits.toLocaleString()} sub="unspent by members" />
         <a href="/admin/leads"><StatCard label="Leads in your database" value={myLeads.toLocaleString()} sub="searchable" /></a>
       </div>
+
+      {mgrMissed > 0 && (
+        <div className="mt-5">
+          <Card>
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg p-3"
+              style={{
+                background: "color-mix(in srgb, var(--warn) 8%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--warn) 30%, transparent)",
+              }}
+            >
+              <div>
+                <div className="text-sm font-semibold" style={{ color: "var(--warn)" }}>
+                  ⚠ {mgrMissed.toLocaleString()} missed opportunities · last 30 days
+                </div>
+                <div className="text-xs" style={{ color: "var(--muted)" }}>
+                  These were real clicks on your outbound emails that couldn&rsquo;t reach your destination —
+                  usually because the offer is inactive or the CTA URL is invalid. Fix it on the Outreach page
+                  to start capturing them. Until then, those clicks fall back to a generic lander.
+                </div>
+              </div>
+              <a className="btn btn-primary" href="/admin/outreach" style={{ padding: "8px 14px" }}>
+                Fix outreach offer →
+              </a>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <SectionTitle>Your margin</SectionTitle>
       <div className="grid gap-4 sm:grid-cols-3">

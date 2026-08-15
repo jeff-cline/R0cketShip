@@ -44,4 +44,5 @@ export interface IngestSummary {
   updated: number;
   skipped: number;
   errors: number;
+  insertedLeadIds: string[];
 }
