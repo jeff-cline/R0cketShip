@@ -31,6 +31,7 @@ export const SERVICES: Service[] = [
 
 /** 40 operating divisions, in board order (Puerto Rico last). */
 export const INDUSTRIES: Industry[] = [
+  { slug: "AEOS", name: "AEOS — Autonomous Entertainment OS", group: "Technology & Data", tagline: "One creative intent becomes a film, a series, a game, a campaign — from a single world." },
   { slug: "insurance", name: "Insurance", group: "Financial", tagline: "AI-underwritten coverage and a white-label InsurTech roll-up." },
   { slug: "oil-gas", name: "Oil & Gas", group: "Energy & Industrial", tagline: "Downhole tech, land leases, and an oilfield-services roll-up." },
   { slug: "biotech", name: "Biotech", group: "Health & Life Sciences", tagline: "Contract-backed biotech with a built-in commercial engine." },
