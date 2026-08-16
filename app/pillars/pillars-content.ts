@@ -204,3 +204,57 @@ export const SERVICES_MAP: Record<string, { name: string; role: string }> = {
   "PR.LAND": { name: "Project PR.Land", role: "Management & shared services · AI SaaS engine" },
   "PR.FUND": { name: "Project PR.Fund", role: "Invests into verticals · recycles revenue · funds dividends & growth" },
 };
+
+// ────────────────────────────────────────────── the accretive thesis ─────────
+// Entertainment is one pillar. What makes it worth more than a pillar is what
+// it does to the other six.
+export const ACCRETIVE = {
+  kicker: "The compounding effect",
+  title: "What happens when Amazon and Berkshire Hathaway have a baby.",
+  lede:
+    "Entertainment is one pillar. But the data it produces, and the audience access it buys, compound across every other pillar — which makes the ecosystem more unique, more valuable, and harder to replicate than the sum of the businesses inside it.",
+
+  models: [
+    {
+      who: "Amazon",
+      shape: "The marketplace",
+      owns: "The demand, the storefront, the logistics and the data",
+      takes: "A percentage of somebody else's product",
+      limit:
+        "Enormous leverage on other people's margin — but it does not make the thing being sold. When the supplier's margin compresses, so does the take.",
+      color: "#f5a623",
+    },
+    {
+      who: "Berkshire Hathaway",
+      shape: "The owner",
+      owns: "The companies that manufacture, sell and service the product",
+      takes: "The whole margin, on the whole product",
+      limit:
+        "Owns the earnings outright — but the businesses sit beside each other rather than inside each other. A furniture company learns nothing from an insurer.",
+      color: "#2f9df4",
+    },
+    {
+      who: "R0cketShip",
+      shape: "The ecosystem",
+      owns: "The demand, the data, the platform — and the companies that make and sell",
+      takes: "The whole margin, plus the data every transaction leaves behind",
+      limit:
+        "Each division earns on its own. Then every transaction, view, call and purchase writes into one graph that makes all forty-six cheaper to run and easier to sell into.",
+      color: "#ff5b2e",
+      us: true,
+    },
+  ],
+
+  entertainmentPoint: [
+    { k: "It earns on its own", v: "AEOS is a real revenue engine in the entertainment space — a perpetual royalty on production, standing up as a business without reference to anything else in the ecosystem." },
+    { k: "It buys attention at a price no auction can match", v: "A film, a series, a game or a live property produces audience at a cost per impression that no paid media channel competes with. That attention is acquisition for every other pillar." },
+    { k: "It produces data nobody else has", v: "Not clicks. Completion, retention, which character an audience actually cares about, which market over-indexes, which product a viewer stopped to look at. First-party, behavioural, and unavailable anywhere else." },
+    { k: "That data makes the other six sharper", v: "It flows into the sales engine, the advertising engine and the business-enhancement engine — lowering acquisition cost and sharpening prediction across insurance, home services, travel, healthcare and every other division." },
+  ],
+
+  accretion:
+    "This is the accretive effect. The entertainment engine is worth something on its own. The data it generates is worth something on its own. But the combination is worth more than either — because the data has nowhere better to go than into an ecosystem that already owns the demand, the platform and the companies doing the selling. A marketplace would have to rent that. A conglomerate would have no way to move it between subsidiaries. We own both ends.",
+
+  close:
+    "One pillar, earning like a business. Feeding six others, compounding like a platform. That is the rising tide — and it is why the ecosystem is worth more than the businesses inside it.",
+};

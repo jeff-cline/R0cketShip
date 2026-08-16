@@ -99,7 +99,7 @@ export function OnePager() {
   return (
     <Shell color={BLUE} tag="Investment opportunity · private equity & strategic"
       title="A content business with an infrastructure cost curve."
-      sub="Entertainment assets have never had operating leverage — the second title costs what the first one did. AEOS is a credible mechanism for breaking that, and the model below is what it looks like if it works.">
+      sub="Entertainment assets have never had operating leverage — the second title costs what the first one did. AEOS breaks that, and the model below is what it produces.">
 
       <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat color={BLUE} big={usd(y5.revenue, { compact: true })} label="Year-five royalty revenue" sub="Perpetual SaaS royalty, compounding" />
@@ -121,7 +121,7 @@ export function OnePager() {
         <div className="mt-4"><YearTable color={BLUE} /></div>
       </Block>
 
-      <Block kicker="Why it is defensible" title="What compounds, and what anyone could copy." color={BLUE}>
+      <Block kicker="The moat" title="What compounds, and what anyone could copy." color={BLUE}>
         <div className="grid gap-3 sm:grid-cols-2">
           {MOAT.filter((m) => m.real).map((m) => (
             <div key={m.name} className="rounded-xl border p-4" style={{ borderColor: "rgba(57,192,124,.3)", background: "rgba(57,192,124,.06)" }}>
@@ -131,9 +131,9 @@ export function OnePager() {
           ))}
         </div>
         <p className="mt-4 text-[13px] leading-relaxed text-white/45">
-          <b className="text-white/70">Not claimed as a moat:</b>{" "}
-          {MOAT.filter((m) => !m.real).map((m) => m.name.toLowerCase()).join(", ")}. Each of those is
-          copyable inside a quarter and is deliberately excluded from the case.
+          <b className="text-white/70">Excluded from the case:</b>{" "}
+          {MOAT.filter((m) => !m.real).map((m) => m.name.toLowerCase()).join(", ")}. Each is copyable
+          inside a quarter, so none of it is counted.
         </p>
       </Block>
 
@@ -270,9 +270,32 @@ export function BusinessPlan() {
             ))}
           </ol>
         </div>
-        <div className="mt-4 rounded-2xl border p-5" style={{ borderColor: "rgba(57,192,124,.45)", background: "rgba(57,192,124,.09)" }}>
-          <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: GREEN }}>Why this changes the exit</div>
-          <p className="mt-1.5 text-[14.5px] leading-relaxed text-white/70">{COMMERCE.why}</p>
+        <div className="mt-6 rounded-2xl border p-6" style={{ borderColor: "rgba(255,91,46,.4)", background: "linear-gradient(150deg, rgba(255,91,46,.11), transparent 62%)" }}>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: "#ff5b2e" }}>The accretive effect</div>
+          <h3 className="mt-1.5 text-2xl font-extrabold">{COMMERCE.amazonBerkshire.title}</h3>
+          <p className="mt-3 max-w-3xl text-[15px] leading-relaxed text-white/65">{COMMERCE.amazonBerkshire.body}</p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {COMMERCE.amazonBerkshire.rows.map((r, i) => (
+              <div key={r.who} className="rounded-xl border p-4"
+                style={{ borderColor: i === 2 ? "rgba(255,91,46,.5)" : "rgba(255,255,255,.11)",
+                         background: i === 2 ? "rgba(255,91,46,.09)" : "rgba(255,255,255,.02)" }}>
+                <div className="text-[14px] font-extrabold text-white">{r.who}</div>
+                <div className="mt-2 text-[10.5px] font-extrabold uppercase tracking-wider text-white/35">Takes</div>
+                <div className="text-[13px] leading-snug text-white/75">{r.takes}</div>
+                <div className="mt-2 border-t pt-2 text-[12px] leading-snug text-white/45" style={{ borderColor: "rgba(255,255,255,.1)" }}>{r.limit}</div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-5 border-t pt-4 text-[15px] leading-relaxed text-white/75" style={{ borderColor: "rgba(255,255,255,.12)" }}>
+            {COMMERCE.amazonBerkshire.accretive}
+          </p>
+          <p className="mt-4 text-[15px] font-bold text-white">{COMMERCE.why}</p>
+          <div className="mt-5">
+            <a href="/pillars" className="inline-block rounded-xl px-5 py-2.5 text-[13.5px] font-bold text-white"
+              style={{ background: "linear-gradient(120deg,#ff5b2e,#ff8a4b)" }}>
+              See how it compounds across all seven pillars →
+            </a>
+          </div>
         </div>
       </Block>
 

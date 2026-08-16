@@ -11,7 +11,7 @@
  */
 import { useState } from "react";
 import Link from "next/link";
-import { PILLARS, THESIS, RISING_TIDE, FLYWHEEL, SERVICES_MAP, type Pillar } from "./pillars-content";
+import { PILLARS, THESIS, RISING_TIDE, FLYWHEEL, SERVICES_MAP, ACCRETIVE, type Pillar } from "./pillars-content";
 import { INDUSTRIES } from "../corporate-structure/industries";
 
 const ACCENT = "#ff5b2e";
@@ -245,6 +245,78 @@ export function PillarsView() {
             <b className="text-white">Each turn of the loop leaves the ecosystem one division stronger.</b>{" "}
             That is the whole argument for owning forty-six businesses instead of one. Not
             diversification — compounding.
+          </p>
+        </div>
+      </section>
+
+      {/* ── the accretive thesis ── */}
+      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.18em]" style={{ color: ACCENT }}>{ACCRETIVE.kicker}</div>
+        <h2 className="mt-2 max-w-4xl text-3xl font-extrabold leading-tight sm:text-4xl">{ACCRETIVE.title}</h2>
+        <p className="mt-4 max-w-3xl text-[16.5px] leading-relaxed text-white/60">{ACCRETIVE.lede}</p>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          {ACCRETIVE.models.map((m) => (
+            <div key={m.who} className="relative overflow-hidden rounded-2xl border p-6"
+              style={{ borderColor: m.us ? m.color : "rgba(255,255,255,.11)",
+                       background: m.us
+                         ? `linear-gradient(155deg, color-mix(in srgb, ${m.color} 16%, transparent), rgba(0,0,0,.3) 62%)`
+                         : "rgba(255,255,255,.025)" }}>
+              {m.us && (
+                <div className="absolute right-4 top-4 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white"
+                  style={{ background: m.color }}>Us</div>
+              )}
+              <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: m.color }}>{m.shape}</div>
+              <div className="mt-1 text-2xl font-extrabold">{m.who}</div>
+              <div className="mt-4 space-y-3">
+                <div>
+                  <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-white/35">Owns</div>
+                  <div className="mt-0.5 text-[13.5px] leading-snug text-white/75">{m.owns}</div>
+                </div>
+                <div>
+                  <div className="text-[10.5px] font-extrabold uppercase tracking-wider text-white/35">Takes</div>
+                  <div className="mt-0.5 text-[13.5px] font-bold leading-snug" style={{ color: m.color }}>{m.takes}</div>
+                </div>
+                <div className="border-t pt-3" style={{ borderColor: "rgba(255,255,255,.1)" }}>
+                  <p className="text-[12.5px] leading-relaxed text-white/50">{m.limit}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-2xl border p-7"
+          style={{ borderColor: "rgba(225,75,138,.4)", background: "linear-gradient(150deg, rgba(225,75,138,.11), transparent 62%)" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-2xl">🎬</span>
+            <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: "#e14b8a" }}>
+              Why the entertainment pillar is not just a pillar
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {ACCRETIVE.entertainmentPoint.map((e, i) => (
+              <div key={e.k} className="flex gap-3">
+                <span className="font-mono text-[12px] font-extrabold" style={{ color: "#e14b8a" }}>{String(i + 1).padStart(2, "0")}</span>
+                <div>
+                  <div className="text-[14.5px] font-bold text-white">{e.k}</div>
+                  <p className="mt-0.5 text-[13px] leading-relaxed text-white/55">{e.v}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link href="/corporate-structure/AEOS" className="rounded-xl px-5 py-2.5 text-[13.5px] font-bold text-white"
+              style={{ background: "linear-gradient(120deg,#e14b8a,#ff8ab5)" }}>Open AEOS</Link>
+            <Link href="/corporate-structure/AEOS/business-plan" className="rounded-xl border px-5 py-2.5 text-[13.5px] font-bold text-white/80"
+              style={{ borderColor: "rgba(255,255,255,.2)" }}>The commerce layer, in the business plan</Link>
+          </div>
+        </div>
+
+        <div className="mt-5 rounded-2xl border p-7" style={{ borderColor: "rgba(255,91,46,.4)", background: "rgba(255,91,46,.07)" }}>
+          <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: ACCENT }}>The accretive effect</div>
+          <p className="mt-2 text-[16px] leading-relaxed text-white/75">{ACCRETIVE.accretion}</p>
+          <p className="mt-4 border-t pt-4 text-[16px] font-bold leading-relaxed text-white" style={{ borderColor: "rgba(255,255,255,.12)" }}>
+            {ACCRETIVE.close}
           </p>
         </div>
       </section>

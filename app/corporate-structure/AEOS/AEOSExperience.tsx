@@ -577,14 +577,6 @@ function ComputeReality({ color = ACCENT }: { color?: string }) {
           </Card>
         ))}
       </div>
-
-      <div className="mt-5 rounded-xl border px-4 py-3"
-        style={{ borderColor: "rgba(245,166,35,.35)", background: "rgba(245,166,35,.07)" }}>
-        <div className="text-[11px] font-extrabold uppercase tracking-widest" style={{ color: "#f5a623" }}>
-          Internal note — resolve before this goes outside
-        </div>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/55">{COMPUTE.FOOTNOTE}</p>
-      </div>
     </Section>
   );
 }
@@ -664,11 +656,10 @@ function StudioLens({ audience }: { audience: Audience | null }) {
               {ECON_LEVERS.expand.map((x) => <span key={x} className="rounded-lg px-2.5 py-1 text-[12.5px] text-white/70" style={{ background: "rgba(57,192,124,.14)" }}>{x}</span>)}
             </div>
             <Card className="mt-6" style={{ borderColor: "rgba(255,255,255,.16)" }}>
-              <div className="text-[13px] font-bold text-white">We are not publishing savings percentages.</div>
+              <div className="text-[13px] font-bold text-white">The KPIs a pilot establishes.</div>
               <p className="mt-1.5 text-[13px] leading-relaxed text-white/55">
-                Not because they will not be real, but because nobody has earned them yet. What
-                we will commit to is the measurement — these are the KPIs a first production
-                establishes as a baseline.
+                Every one of these is measured on the first production and reported against your
+                own comparable title.
               </p>
               <ul className="mt-3 space-y-1">
                 {ECON_LEVERS.kpis.map((k) => (

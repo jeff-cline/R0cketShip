@@ -118,6 +118,18 @@ export const COMMERCE = {
     "Commerce revenue funds the next title, which generates more data, across more of the network.",
     "Every other R0cketShip division inherits the same audience graph and sells into it.",
   ],
+  amazonBerkshire: {
+    title: "Amazon and Berkshire Hathaway, in one company.",
+    body:
+      "A marketplace owns the demand and takes a percentage of somebody else's product. A conglomerate owns the companies outright and takes the whole margin, but its subsidiaries sit beside each other rather than inside each other — a furniture business learns nothing from an insurer. AEOS is inside an ecosystem that does both: R0cketShip owns the demand, the platform and the operating companies, so the entertainment engine earns on its own and then hands its data to forty-five other divisions that are already selling.",
+    rows: [
+      { who: "Amazon", takes: "A percentage of someone else's product", limit: "No margin on the thing itself" },
+      { who: "Berkshire Hathaway", takes: "The whole margin, on the whole product", limit: "No data moving between subsidiaries" },
+      { who: "R0cketShip + AEOS", takes: "The whole margin, plus the data every transaction leaves behind", limit: "Both ends owned — which is the accretion" },
+    ],
+    accretive:
+      "The entertainment engine is a revenue business on its own. The data it produces is valuable on its own. The combination is worth more than either, because that data has nowhere better to go than into an ecosystem that already owns the demand, the platform and the companies doing the selling. A marketplace would have to rent that. A conglomerate would have no way to move it. This is what makes the ecosystem worth more than the businesses inside it.",
+  },
   why:
     "This is the line that changes the exit conversation. A production platform is worth a production multiple. A production platform with an attached first-party commerce engine, selling across a network of forty operating divisions, is a different asset entirely — and the entertainment IP is what makes the audience worth having.",
 };

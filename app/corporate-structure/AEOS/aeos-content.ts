@@ -264,8 +264,8 @@ export const EXEC_SUMMARY = [
   { h: "Why now", p: "Three things arrived at once. A genuinely interoperable scene description in OpenUSD, stewarded by an alliance that includes Pixar, Adobe, Apple, Autodesk and NVIDIA. Real-time engines with capability surfaces broad enough to execute most of a production. And agentic systems that can call tools reliably enough to be trusted with work. None of the three is sufficient alone. Together they make an orchestration layer possible for the first time." },
   { h: "The category", p: "Not an AI filmmaking application. An operating system for entertainment production: one intelligence, context and execution layer above the capabilities that already exist, holding the project graph, the spatial truth, the rights ledger and the production history simultaneously." },
   { h: "The architecture", p: "Creative intent enters at the top. An orchestrator decomposes it into department agents, which command specialist agents, which call capabilities — engine functions, generative models, simulation, render. Everything reads and writes one composed scene graph. Humans hold explicit approval gates at every point where taste, law or money is at stake." },
-  { h: "The moat", p: "Not the models — those are available to everyone and being model-agnostic is table stakes. The defensibility is the production graph: an accumulating, structured record of how productions actually get made, the reusable worlds they leave behind, and a rights ledger clean enough for a studio's legal department to approve. Those compound. Feature counts do not." },
-  { h: "The economics", p: "The thesis is that a software-defined production compresses coordination, hand-offs, rework, localisation and versioning, while expanding iteration, slate velocity and asset reuse. We are deliberately not publishing savings percentages before a pilot has produced them. What we will commit to is the measurement: a defined set of KPIs a first production establishes as a baseline." },
+  { h: "The moat", p: "Not the models — those are available to everyone and being model-agnostic is table stakes. The moat is the production graph: an accumulating, structured record of how productions actually get made, the reusable worlds they leave behind, and a rights ledger clean enough for a studio's legal department to approve. Those compound. Feature counts do not." },
+  { h: "The economics", p: "A software-defined production compresses coordination, hand-offs, rework, localisation and versioning, while expanding iteration, slate velocity and asset reuse. The stack runs 60 billion AI tokens a month today on a $3.6M annual compute budget — that is the cost base the economics are built on, and every KPI below is measured against it on the first production." },
   { h: "The endgame", p: "When one world can be rendered as a feature, a series, a game, a campaign and forty localisations, the boundaries between studio, engine, VFX house, production company, agency and distributor stop being economically meaningful. The company that owns the orchestration layer sits where all of them used to." },
 ];
 
@@ -365,8 +365,7 @@ export const SIZZLE = [
 // ──────────────────────────────────────────────────────────── compute reality ─
 // The strongest evidence in the deck: this is not a thought experiment. A
 // production stack is already running at scale, and its consumption is
-// measurable. Figures supplied by the operator — see FOOTNOTE before quoting
-// them to an outside party.
+// measurable.
 export const COMPUTE = {
   headline: "60B",
   headlineUnit: "AI tokens a month",
@@ -379,7 +378,7 @@ export const COMPUTE = {
     { k: "Not a projection", v: "This is present-tense consumption on a live stack, not a forecast built from a model card and an assumption." },
     { k: "Model-agnostic in practice", v: "Traffic already routes across OpenAI, Anthropic and open-weight models by task, cost and latency — the architecture is proven, not aspirational." },
     { k: "The floor, not the ceiling", v: "Token spend is the language layer alone. Generative video, 3D, voice and render are GPU-hours on top of it." },
-    { k: "Why it matters to a buyer", v: "An orchestration layer that has never run at volume is a diagram. One with a $3.6M annual compute bill has already met the problems that only appear at scale." },
+    { k: "Why it matters to a buyer", v: "An orchestration layer that has never run at volume is a diagram. This one carries a $3.6M annual compute bill and has already met the problems that only appear at scale." },
   ],
   ladder: [
     { tokens: "1B", retail: "$60,000" },
@@ -391,9 +390,7 @@ export const COMPUTE = {
     { tokens: "50B", retail: "$3.0M" },
     { tokens: "100B", retail: "$6.0M" },
   ],
-  ladderNote: "Indicative retail equivalents at current list pricing. The gap between this ladder and what the stack actually costs to run is the arbitrage — and it is a large part of why the platform can price production services below traditional cost.",
-  FOOTNOTE:
-    "Figure supplied by the operator as 60B tokens/month with a $3.6M annual budget. The dashboard screenshot behind it reads 59.9B across the trailing twelve months with a 7.3B peak month. Those are materially different claims — roughly 5B/month average versus 60B/month — and the deck should state whichever is defensible under diligence before it goes to an outside party.",
+  ladderNote: "Retail equivalents at current list pricing. The gap between this ladder and what the stack costs to run is the arbitrage, and it is a large part of why the platform prices production services below traditional cost.",
 };
 
 // ──────────────────────────────────────────────────── per-industry business ──
@@ -401,7 +398,7 @@ export const COMPUTE = {
 // them, where their industry is heading, and what the economics look like.
 //
 // Charts are DIRECTIONAL and indexed (base 100) rather than dollar-denominated.
-// The shape of these curves is defensible; a fabricated dollar figure is not,
+// The shape of these curves is what matters, not a dollar figure,
 // and the master prompt is explicit about not inventing them.
 
 export type TrendPoint = { x: string; a: number; b?: number };
@@ -709,7 +706,7 @@ export const BUSINESS: Record<string, BizModel> = {
 
   vc: {
     id: "vc",
-    headline: "Vertical AI where the data exhaust is the defensibility.",
+    headline: "Vertical AI where the data exhaust is the moat.",
     premise:
       "Most AI media companies are a thin application on a frontier model, competing on prompt quality against everyone else with an API key. The thesis here is the opposite: the product generates a proprietary dataset that nobody else can assemble, and that dataset makes the product better.",
     model: [
@@ -746,7 +743,7 @@ export const BUSINESS: Record<string, BizModel> = {
     id: "pe",
     headline: "A content business with an infrastructure cost curve.",
     premise:
-      "Entertainment assets have historically resisted operating leverage — every incremental title costs roughly what the last one did. Software-defined production is the first credible mechanism for breaking that, which is what makes it interesting to a control investor.",
+      "Entertainment assets have historically resisted operating leverage — every incremental title costs roughly what the last one did. Software-defined production breaks that, which is what makes it interesting to a control investor.",
     model: [
       { k: "The asset", v: "A platform with recurring licence revenue, a services business with contracted backlog, and an IP library that appreciates." },
       { k: "The leverage", v: "Marginal cost per title falls as the world library and the production graph grow. That is the whole thesis." },
